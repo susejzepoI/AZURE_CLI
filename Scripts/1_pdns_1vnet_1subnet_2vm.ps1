@@ -11,3 +11,6 @@ az network private-dns zone create --name "contosodns.com" --resource-group cont
 
 #Create a link between the Private DNS zone and the Vnet
 az network private-dns link vnet create --name coreservicesvnetlink --registration-enabled true --resource-group contosoRG --virtual-network CoreServiceVnet --zone-name "contosodns.com"
+
+#Create 2 virtual machines within the vnet
+az vm create --name vm --resource-group "contosoRG" --image "MicrosoftWindowsServer:WindowsServer:2019-datacenter-gensecond:latest" --vnet-name "CoreServiceVnet" --subnet "DatabaseSubnet" --admin-username userazure3000 --admin-password "3000@UserAzure" --count 2
