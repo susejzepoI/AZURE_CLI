@@ -21,22 +21,30 @@ param (
 
     #JLopez: User for the virtual machine.
     [Parameter(Mandatory=$true, HelpMessage="User for the virtual machine.")]
-    [string]$vnUserName,
+    [string]$vmUserName,
 
     #JLopez: Password for the virtual machine.
     [Parameter(Mandatory=$true, HelpMessage="Password for the virtual machine.")]
-    [SecureString]$vnPassword
+    [string]$vmPassword
 )
 
 #JLopez: Print variables entered
 Write-Host "Resource group:         $resourcegroupname"
 Write-Host "Location:               $Location"
 Write-Host "Vnet Name:              $vnetName"
-Write-Host "User Name:              $vnUserName"
+Write-Host "User Name:              $vmUserName"
 
 
 # 1. Create and configure a virtual network in Azure.
+az group create --location $Location --resource-group $resourcegroupname
+
 # 2. Deploy two virtual machines into different subnets of the virtual network.
+az network vnet create --name $vnetName --resource-group $resourcegroupname --address-prefixes 10.40.0.0/20 --subnet-name "Subnet0" --subnet-prefixes 10.40.0.0/24 --subnet-name "Subnet1" --subnet-prefixes 10.40.1.0/24
+
+az vm create --name "az104-04-vm0" --resource-group $resourcegroupname --vnet-name $vnetName --subnet "Subnet0" --admin-username $vmUserName --admin-password $vmPassword --image "MicrosoftWindowsServer:WindowsServer:2019-datacenter-gensecond:latest"
+
+az vm create --name "az104-04-vm1" --resource-group $resourcegroupname --vnet-name $vnetName --subnet "Subnet1" --admin-username $vmUserName --admin-password $vmPassword --image "MicrosoftWindowsServer:WindowsServer:2019-datacenter-gensecond:latest"
+
 # 3. Ensure the virtual machines have public IP addresses that won’t change over time.
 # 4. Protect the virtual machine public endpoints from being accessible from the internet.
 # 5. Ensure internal Azure virtual machines names and IP addresses can be resolved.
