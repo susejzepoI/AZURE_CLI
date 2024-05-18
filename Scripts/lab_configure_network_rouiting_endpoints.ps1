@@ -1,8 +1,9 @@
 #Interactive lab
-#Author:    Jesus Lopez Mesia
-#Linkedin:  https://www.linkedin.com/in/susejzepol/
-#Date:      May-15-2024
-#Lab:       https://learn.microsoft.com/en-us/training/modules/configure-network-routing-endpoints/7-simulation-routing
+#Author:            Jesus Lopez Mesia
+#Linkedin:          https://www.linkedin.com/in/susejzepol/
+#Created date:      May-15-2024
+#Modified date:     May-18-2024
+#Lab:               https://learn.microsoft.com/en-us/training/modules/configure-network-routing-endpoints/7-simulation-routing
 
 [CmdletBinding()]
 param (
@@ -39,7 +40,7 @@ Write-Host "User Name:              $vmUserName"
 az group create --location $Location --resource-group $resourcegroupname
 
 # 2. Deploy two virtual machines into different subnets of the virtual network.
-az network vnet create --name $vnetName --resource-group $resourcegroupname --address-prefixes 10.40.0.0/20 --subnet-name "Subnet0" --subnet-prefixes 10.40.0.0/24 --subnet-name "Subnet1" --subnet-prefixes 10.40.1.0/24
+az network vnet create --name $vnetName --resource-group $resourcegroupname --address-prefixes 10.40.0.0/20 --subnets '[{"name":"Subnet0","addressPrefix":"10.40.0.0/24"},{"name":"Subnet1","addressPrefix":"10.40.1.0/24"}]'
 
 az vm create --name "az104-04-vm0" --resource-group $resourcegroupname --vnet-name $vnetName --subnet "Subnet0" --admin-username $vmUserName --admin-password $vmPassword --image "MicrosoftWindowsServer:WindowsServer:2019-datacenter-gensecond:latest"
 
