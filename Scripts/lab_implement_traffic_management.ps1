@@ -1,4 +1,4 @@
-#Interactive lab
+#Interactive lab 03
 #Author:            Jesus Lopez Mesia
 #Linkedin:          https://www.linkedin.com/in/susejzepol/
 #Created date:      June-03-2024
@@ -53,3 +53,44 @@ $msg = "Resource groups: {0}, {1}, {2}." -f $resourcegroup1name, $resourcegroup2
 Write-Host $msg 
 $msg = "Vnets Names: {0}, {1}, {2}." -f $vnet1Name, $vnet2Name, $vnet3Name
 Write-Host $msg 
+
+$msg = "Starting to create the 3 resource groups in the same region ({0})." -f $Location
+Write-Host $msg
+
+az group create --location $Location `
+    --resource-group $resourcegroup1name `
+    --tags project=az104lab03
+
+az group create --location $Location `
+    --resource-group $resourcegroup2name `
+    --tags project=az104lab03
+
+az group create --location $Location `
+    --resource-group $resourcegroup3name `
+    --tags project=az104lab03
+
+$msg = "Creating the 3 virtual networks in the same region ({0})." -f $Location
+Write-Host $msg
+
+az network vnet create --name $vnet1Name `
+    --resource-group $resourcegroup1name `
+    --tags project=az104lab03 `
+    --location $Location `
+    --address-prefixes 10.60.0.0/22 `
+    --subnets '[{"name":"subnet0","addressPrefix":"10.60.0.0/24"},{"name":"subnet1","addressPrefix":"10.60.1.0/24"},{"name":"subnet-appgw","addressPrefix":"10.60.3.224/27"}]'
+
+az network vnet create --name $vnet2Name `
+    --resource-group $resourcegroup2name `
+    --tags project=az104lab03 `
+    --location $Location `
+    --address-prefixes 10.62.0.0/22 `
+    --subnet-name "Subnet0" `
+    --subnet-prefixes 10.62.0.0/24
+
+az network vnet create --name $vnet3Name `
+    --resource-group $resourcegroup3name `
+    --tags project=az104lab03 `
+    --location $Location `
+    --address-prefixes 10.63.0.0/22 `
+    --subnet-name "Subnet0" `
+    --subnet-prefixes 10.63.0.0/24
