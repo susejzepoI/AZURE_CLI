@@ -31,11 +31,14 @@ param(
     [string]$vnet2Name,
 
     [Parameter(Mandatory=$true, HelpMessage="Virtual nework 2 name (this vnet contains the fourth virtual machine + peering to the vnet 1).")]
-    [string]$vnet3Name
+    [string]$vnet3Name,
+
+    [Parameter(Mandatory=$true, HelpMessage="Virtual nework 2 name (this vnet contains the fourth virtual machine + peering to the vnet 1).")]
+    [string]$vmUserName
 
 )
 
-#JLopez: Print variables entered
+#JLopez: Print entered variables
 Write-Host ""
 Write-Host ""
 Write-Host ""
@@ -80,7 +83,7 @@ az network vnet create --name $vnet1Name `
     --subnets '[{"name":"subnet0","addressPrefix":"10.60.0.0/24"},{"name":"subnet1","addressPrefix":"10.60.1.0/24"},{"name":"subnet-appgw","addressPrefix":"10.60.3.224/27"}]'
 
 az network vnet create --name $vnet2Name `
-    --resource-group $resourcegroup2name `
+    --resource-group $resourcegroup1name `
     --tags project=az104lab03 `
     --location $Location `
     --address-prefixes 10.62.0.0/22 `
@@ -88,9 +91,57 @@ az network vnet create --name $vnet2Name `
     --subnet-prefixes 10.62.0.0/24
 
 az network vnet create --name $vnet3Name `
-    --resource-group $resourcegroup3name `
+    --resource-group $resourcegroup1name `
     --tags project=az104lab03 `
     --location $Location `
     --address-prefixes 10.63.0.0/22 `
     --subnet-name "Subnet0" `
     --subnet-prefixes 10.63.0.0/24
+
+$msg = "Creating the virtual machines in each vnet."
+Write-Host $msg
+
+$msg = "Enter the password for the user {0}." -f $vmUserName
+Write-Host $msg
+
+    try {
+        $pass = Read-Host "Enter your password: " -asPlainText
+
+        $msg = "Creating the virtual machines for {0} vnet." -f $vnet1Name
+        Write-Host $msg
+
+        az vm create --name "az104-06-vm0" --resource-group $resourcegroup1name `
+            --vnet-name $vnet1Name --subnet "subnet0" `
+            --admin-username $vmUserName --admin-password $pass `
+            --image "MicrosoftWindowsServer:WindowsServer:2019-datacenter-gensecond:latest"
+        
+        az vm create --name "az104-06-vm1" --resource-group $resourcegroup1name `
+            --vnet-name $vnet1Name --subnet "subnet1" `
+            --admin-username $vmUserName --admin-password $pass `
+            --image "MicrosoftWindowsServer:WindowsServer:2019-datacenter-gensecond:latest"
+
+        $msg = "Creating the virtual machine for {0} vnet." -f $vnet2Name
+        Write-Host $msg
+
+        az vm create --name "az104-06-vm2" --resource-group $resourcegroup1name `
+            --vnet-name $vnet2Name --subnet "subnet0" `
+            --admin-username $vmUserName --admin-password $pass `
+            --image "MicrosoftWindowsServer:WindowsServer:2019-datacenter-gensecond:latest"
+
+        $msg = "Creating the virtual machine for {0} vnet." -f $vnet3Name
+        Write-Host $msg
+
+        az vm create --name "az104-06-vm3" --resource-group $resourcegroup1name `
+            --vnet-name $vnet3Name --subnet "subnet0" `
+            --admin-username $vmUserName --admin-password $pass `
+            --image "MicrosoftWindowsServer:WindowsServer:2019-datacenter-gensecond:latest"
+
+    }catch{
+        Write-Error "An error was caught: $_"
+    }
+    finally {
+        #JLopez-18062024: Clean up the password variable.
+        $pass = $null
+        [System.GC]::Collect()
+        [System.GC]::WaitForPendingFinalizers()
+    }
