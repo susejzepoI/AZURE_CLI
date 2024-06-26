@@ -151,6 +151,41 @@ Write-Host $msg
                 --version "1.4"
         }
 
+        Write-Host "Configuring peerings from $vnet1Name to $vnet2Name."
+        az network vnet peering create `
+            --resource-group $resourcegroup1name `
+            --name "$vnet1Name-to-$vnet2Name" `
+            --vnet-name $vnet1Name `
+            --remote-vnet $vnet2Name `
+            --allow-forwarded-traffic false `
+            --allow-vnet-access true
+
+        az network vnet peering create `
+            --resource-group $resourcegroup1name `
+            --name "$vnet2Name-to-$vnet1Name" `
+            --vnet-name $vnet2Name `
+            --remote-vnet $vnet1Name `
+            --allow-forwarded-traffic false `
+            --allow-vnet-access true
+            
+
+        Write-Host "Configuring peerings from $vnet1Name to $vnet3Name."
+        az network vnet peering create `
+            --resource-group $resourcegroup1name `
+            --name "$vnet1Name-to-$vnet3Name" `
+            --vnet-name $vnet1Name `
+            --remote-vnet $vnet3Name `
+            --allow-forwarded-traffic false `
+            --allow-vnet-access true
+
+        az network vnet peering create `
+            --resource-group $resourcegroup1name `
+            --name "$vnet3Name-to-$vnet1Name" `
+            --vnet-name $vnet3Name `
+            --remote-vnet $vnet1Name `
+            --allow-forwarded-traffic false `
+            --allow-vnet-access true
+
     }catch{
         Write-Error "An error was caught: $_"
     }
