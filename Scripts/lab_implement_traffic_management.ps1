@@ -17,11 +17,11 @@ param(
     [Parameter(Mandatory=$true, HelpMessage="Name of the first resource group (this rg contains 4 virtual machines and 3 vnets + peering) to deploy.")]
     [string]$resourcegroup1name,
 
-    [Parameter(Mandatory=$true, HelpMessage="Name of the second resource group (this rg contains the first gateway with a public IP) to deploy.")]
-    [string]$resourcegroup2name,
+    # [Parameter(Mandatory=$true, HelpMessage="Name of the second resource group (this rg contains the first gateway with a public IP) to deploy.")]
+    # [string]$resourcegroup2name,
 
-    [Parameter(Mandatory=$true, HelpMessage="Name of the third resource group (this rg contains the second gateway with a public IP) to deploy.")]
-    [string]$resourcegroup3name,
+    # [Parameter(Mandatory=$true, HelpMessage="Name of the third resource group (this rg contains the second gateway with a public IP) to deploy.")]
+    # [string]$resourcegroup3name,
 
     #JLopez: Virtuals nework names
     [Parameter(Mandatory=$true, HelpMessage="Virtual nework 1 name (this vnet contains the first 2 virtual machines).")]
@@ -45,14 +45,14 @@ Write-Host ""
 Write-Host ""
 Write-Host "********************************************"
 Write-Host "   #Author:            Jesus Lopez Mesia"
-Write-Host "   #Modified date:     June-03-2024"
+Write-Host "   #Modified date:     June-25-2024"
 Write-Host "********************************************"
 Write-Host ""
 
 
 $msg = "Location: $Location"
 Write-Host $msg
-$msg = "Resource groups: {0}, {1}, {2}." -f $resourcegroup1name, $resourcegroup2name, $resourcegroup3name
+$msg = "Resource groups: {0}." -f $resourcegroup1name
 Write-Host $msg 
 $msg = "Vnets Names: {0}, {1}, {2}." -f $vnet1Name, $vnet2Name, $vnet3Name
 Write-Host $msg 
@@ -64,13 +64,13 @@ az group create --location $Location `
     --resource-group $resourcegroup1name `
     --tags project=az104lab03
 
-az group create --location $Location `
-    --resource-group $resourcegroup2name `
-    --tags project=az104lab03
+# az group create --location $Location `
+#     --resource-group $resourcegroup2name `
+#     --tags project=az104lab03
 
-az group create --location $Location `
-    --resource-group $resourcegroup3name `
-    --tags project=az104lab03
+# az group create --location $Location `
+#     --resource-group $resourcegroup3name `
+#     --tags project=az104lab03
 
 $msg = "Creating the 3 virtual networks in the same region ({0})." -f $Location
 Write-Host $msg
@@ -135,6 +135,21 @@ Write-Host $msg
             --vnet-name $vnet3Name --subnet "subnet0" `
             --admin-username $vmUserName --admin-password $pass `
             --image "MicrosoftWindowsServer:WindowsServer:2019-datacenter-gensecond:latest"
+
+        $msg = "Creating the network watcher for each virtual machine."
+        Write-Host $msg
+
+        $vms = az vm list --resource-group $resourcegroup1name --query "[].name" -o tsv
+
+        foreach($vm in $vms){
+            Write-Host "Setting extension for VM: $vm."
+            az vm extension set `
+                --resource-group $resourcegroup1name `
+                --vm-name $vm `
+                --name "NetworkWatcherAgent" `
+                --publisher "Microsoft.Azure.NetworkWatcher" `
+                --version "1.4"
+        }
 
     }catch{
         Write-Error "An error was caught: $_"
