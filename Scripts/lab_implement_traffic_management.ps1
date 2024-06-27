@@ -50,15 +50,11 @@ Write-Host "********************************************"
 Write-Host ""
 
 
-$msg = "Location: $Location"
-Write-Host $msg
-$msg = "Resource groups: {0}." -f $resourcegroup1name
-Write-Host $msg 
-$msg = "Vnets Names: {0}, {1}, {2}." -f $vnet1Name, $vnet2Name, $vnet3Name
-Write-Host $msg 
+Write-Host "Location: $Location"
+Write-Host "Resource groups: $resourcegroup1name."
+Write-Host "Vnets Names: $vnet1Name, $vnet2Name, $vnet3Name."
 
-$msg = "Starting to create the 3 resource groups in the same region ({0})." -f $Location
-Write-Host $msg
+Write-Host "Starting to create the 3 resource groups in the same region ($Location)."
 
 az group create --location $Location `
     --resource-group $resourcegroup1name `
@@ -72,8 +68,7 @@ az group create --location $Location `
 #     --resource-group $resourcegroup3name `
 #     --tags project=az104lab03
 
-$msg = "Creating the 3 virtual networks in the same region ({0})." -f $Location
-Write-Host $msg
+Write-Host "Creating the 3 virtual networks in the same region ($Location)."
 
 az network vnet create --name $vnet1Name `
     --resource-group $resourcegroup1name `
@@ -98,17 +93,14 @@ az network vnet create --name $vnet3Name `
     --subnet-name "Subnet0" `
     --subnet-prefixes 10.63.0.0/24
 
-$msg = "Creating the virtual machines in each vnet."
-Write-Host $msg
+Write-Host "Creating the virtual machines in each vnet."
 
-$msg = "Enter the password for the user {0}." -f $vmUserName
-Write-Host $msg
+Write-Host "Enter the password for the user $vmUserName."
 
     try {
-        $pass = Read-Host "Enter your password: " -asPlainText
+        $pass = Read-Host -asPlainText "Enter your password: " 
 
-        $msg = "Creating the virtual machines for {0} vnet." -f $vnet1Name
-        Write-Host $msg
+        Write-Host "Creating the virtual machines for $vnet1Name vnet."
 
         az vm create --name "az104-06-vm0" --resource-group $resourcegroup1name `
             --vnet-name $vnet1Name --subnet "subnet0" `
@@ -120,28 +112,26 @@ Write-Host $msg
             --admin-username $vmUserName --admin-password $pass `
             --image "MicrosoftWindowsServer:WindowsServer:2019-datacenter-gensecond:latest"
 
-        $msg = "Creating the virtual machine for {0} vnet." -f $vnet2Name
-        Write-Host $msg
+        Write-Host "Creating the virtual machine for $vnet2Name vnet."
 
         az vm create --name "az104-06-vm2" --resource-group $resourcegroup1name `
             --vnet-name $vnet2Name --subnet "subnet0" `
             --admin-username $vmUserName --admin-password $pass `
             --image "MicrosoftWindowsServer:WindowsServer:2019-datacenter-gensecond:latest"
 
-        $msg = "Creating the virtual machine for {0} vnet." -f $vnet3Name
-        Write-Host $msg
+        Write-Host "Creating the virtual machine for $vnet3Name vnet."
 
         az vm create --name "az104-06-vm3" --resource-group $resourcegroup1name `
             --vnet-name $vnet3Name --subnet "subnet0" `
             --admin-username $vmUserName --admin-password $pass `
             --image "MicrosoftWindowsServer:WindowsServer:2019-datacenter-gensecond:latest"
 
-        $msg = "Creating the network watcher for each virtual machine."
-        Write-Host $msg
+        Write-Host "Creating the network watcher for each virtual machine."
 
         $vms = az vm list --resource-group $resourcegroup1name --query "[].name" -o tsv
 
         foreach($vm in $vms){
+            
             Write-Host "Setting extension for VM: $vm."
             az vm extension set `
                 --resource-group $resourcegroup1name `
