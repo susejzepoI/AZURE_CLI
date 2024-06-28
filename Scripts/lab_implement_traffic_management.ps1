@@ -136,7 +136,7 @@ Write-Host "Enter the password for the user $vmUserName."
             az vm extension set `
                 --resource-group $resourcegroup1name `
                 --vm-name $vm `
-                --name "NetworkWatcherAgent" `
+                --name "NetworkWatcherAgentWindows" `
                 --publisher "Microsoft.Azure.NetworkWatcher" `
                 --version "1.4"
         }
