@@ -2,7 +2,7 @@
 #Author:            Jesus Lopez Mesia
 #Linkedin:          https://www.linkedin.com/in/susejzepol/
 #Created date:      June-03-2024
-#Modified date:     June-03-2024
+#Modified date:     July-03-2024
 #Lab:               https://learn.microsoft.com/en-us/training/modules/configure-azure-load-balancer/9-simulation-load-balancer
 
 
@@ -45,7 +45,7 @@ Write-Host ""
 Write-Host ""
 Write-Host "********************************************"
 Write-Host "   #Author:            Jesus Lopez Mesia"
-Write-Host "   #Modified date:     June-25-2024"
+Write-Host "   #Modified date:     July-03-2024"
 Write-Host "********************************************"
 Write-Host ""
 
@@ -175,6 +175,12 @@ Write-Host "Enter the password for the user $vmUserName."
             --remote-vnet $vnet1Name `
             --allow-forwarded-traffic false `
             --allow-vnet-access true
+
+        Write-Host "Configuring ip forwarding for $vnet1Name."
+
+        $vm0NicID = $(az vm show --resource-group $resourcegroup1name --vm-name "az104-06-vm0" --query "networkProfile.networkInterfaces[].id" -o tsv)
+        az network nic update --ids $vm0NicID --ip-forwarding true
+
 
     }catch{
         Write-Error "An error was caught: $_"
