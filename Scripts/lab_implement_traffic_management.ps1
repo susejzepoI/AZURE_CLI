@@ -176,11 +176,52 @@ Write-Host "Enter the password for the user $vmUserName."
             --allow-forwarded-traffic false `
             --allow-vnet-access true
 
-        Write-Host "Configuring ip forwarding for $vnet1Name."
+        Write-Host "Configuring ip forwarding for the 'az104-06-vm0' virtual machine."
 
         $vm0NicID = $(az vm show --resource-group $resourcegroup1name --vm-name "az104-06-vm0" --query "networkProfile.networkInterfaces[].id" -o tsv)
         az network nic update --ids $vm0NicID --ip-forwarding true
 
+        Write-Host "Configuring settings for the the 'az104-06-vm0' virtual machine."
+
+        az vm extension set `
+            --resource-group $resourcegroup1name `
+            --vm-name "az104-06-vm0" `
+            --name CustomScriptExtension `
+            --publisher Microsoft.Compute `
+            --version 1.10 `
+            --settings '{\"commandToExecute\": \"powershell -ExecutionPolicy Unrestricted -Command Install-WindowsFeature RemoteAccess -IncludeManagementTools\"}'
+
+            az vm extension set `
+            --resource-group $resourcegroup1name `
+            --vm-name "az104-06-vm0" `
+            --name CustomScriptExtension `
+            --publisher Microsoft.Compute `
+            --version 1.10 `
+            --settings '{\"commandToExecute\": \"powershell -ExecutionPolicy Unrestricted -Command Install-WindowsFeature -Name Routing -IncludeManagementTools -IncludeAllSubFeature\"}'
+
+            az vm extension set `
+            --resource-group $resourcegroup1name `
+            --vm-name "az104-06-vm0" `
+            --name CustomScriptExtension `
+            --publisher Microsoft.Compute `
+            --version 1.10 `
+            --settings '{\"commandToExecute\": \"powershell -ExecutionPolicy Unrestricted -Command Install-WindowsFeature -Name RSAT-RemoteAccess-PowerShell\"}'
+
+            az vm extension set `
+            --resource-group $resourcegroup1name `
+            --vm-name "az104-06-vm0" `
+            --name CustomScriptExtension `
+            --publisher Microsoft.Compute `
+            --version 1.10 `
+            --settings '{\"commandToExecute\": \"powershell -ExecutionPolicy Unrestricted -Command Install-RemoteAccess -Vpntype RoutingOnly\"}'
+
+            az vm extension set `
+            --resource-group $resourcegroup1name `
+            --vm-name "az104-06-vm0" `
+            --name CustomScriptExtension `
+            --publisher Microsoft.Compute `
+            --version 1.10 `
+            --settings '{\"commandToExecute\": \"powershell -ExecutionPolicy Unrestricted -Command Get-NetAdapter | Set-NetIPInterface -Forwarding Enabled\"}'
 
     }catch{
         Write-Error "An error was caught: $_"
