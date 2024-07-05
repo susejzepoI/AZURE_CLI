@@ -1,4 +1,4 @@
-Install-WindowsFeature -Name Routing -IncludeManagementTools - IncludeAllSubFeature
+Install-WindowsFeature -Name Routing -IncludeManagementTools -IncludeAllSubFeature
 
 Install-WindowsFeature -Name "RSAT-RemoteAccess-PowerShell"
 

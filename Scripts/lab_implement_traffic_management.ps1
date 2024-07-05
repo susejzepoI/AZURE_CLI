@@ -98,7 +98,7 @@ Write-Host "Creating the virtual machines in each vnet."
 Write-Host "Enter the password for the user $vmUserName."
 
     try {
-        $pass = Read-Host -asPlainText "Enter your password: " 
+        $pass = Read-Host "Enter your password: " -MaskInput
 
         Write-Host "Creating the virtual machines for $vnet1Name vnet."
 
@@ -138,7 +138,7 @@ Write-Host "Enter the password for the user $vmUserName."
                 --vm-name $vm `
                 --name "NetworkWatcherAgentWindows" `
                 --publisher "Microsoft.Azure.NetworkWatcher" `
-                --version "1.4"
+                --version 1.9
         }
 
         Write-Host "Configuring peerings from $vnet1Name to $vnet2Name."
@@ -178,50 +178,59 @@ Write-Host "Enter the password for the user $vmUserName."
 
         Write-Host "Configuring ip forwarding for the 'az104-06-vm0' virtual machine."
 
-        $vm0NicID = $(az vm show --resource-group $resourcegroup1name --vm-name "az104-06-vm0" --query "networkProfile.networkInterfaces[].id" -o tsv)
-        az network nic update --ids $vm0NicID --ip-forwarding true
 
-        Write-Host "Configuring settings for the the 'az104-06-vm0' virtual machine."
+        Write-Host "Checking if the virtual machine 'az104-06-vm0' was created."
 
-        az vm extension set `
-            --resource-group $resourcegroup1name `
-            --vm-name "az104-06-vm0" `
-            --name CustomScriptExtension `
-            --publisher Microsoft.Compute `
-            --version 1.10 `
-            --settings '{\"commandToExecute\": \"powershell -ExecutionPolicy Unrestricted -Command Install-WindowsFeature RemoteAccess -IncludeManagementTools\"}'
+        $checkVM0 = $(az vm show --resource-group $resourcegroup1name --name "az104-06-vm0" --query "name" --output tsv)
 
+        if ($checkVM0) {
+            $vm0NicID = $(az vm show --resource-group $resourcegroup1name --name "az104-06-vm0" --query "networkProfile.networkInterfaces[].id" -o tsv)
+            az network nic update --ids $vm0NicID --ip-forwarding true
+    
+            Write-Host "Configuring settings for the the 'az104-06-vm0' virtual machine."
+    
             az vm extension set `
-            --resource-group $resourcegroup1name `
-            --vm-name "az104-06-vm0" `
-            --name CustomScriptExtension `
-            --publisher Microsoft.Compute `
-            --version 1.10 `
-            --settings '{\"commandToExecute\": \"powershell -ExecutionPolicy Unrestricted -Command Install-WindowsFeature -Name Routing -IncludeManagementTools -IncludeAllSubFeature\"}'
-
-            az vm extension set `
-            --resource-group $resourcegroup1name `
-            --vm-name "az104-06-vm0" `
-            --name CustomScriptExtension `
-            --publisher Microsoft.Compute `
-            --version 1.10 `
-            --settings '{\"commandToExecute\": \"powershell -ExecutionPolicy Unrestricted -Command Install-WindowsFeature -Name RSAT-RemoteAccess-PowerShell\"}'
-
-            az vm extension set `
-            --resource-group $resourcegroup1name `
-            --vm-name "az104-06-vm0" `
-            --name CustomScriptExtension `
-            --publisher Microsoft.Compute `
-            --version 1.10 `
-            --settings '{\"commandToExecute\": \"powershell -ExecutionPolicy Unrestricted -Command Install-RemoteAccess -Vpntype RoutingOnly\"}'
-
-            az vm extension set `
-            --resource-group $resourcegroup1name `
-            --vm-name "az104-06-vm0" `
-            --name CustomScriptExtension `
-            --publisher Microsoft.Compute `
-            --version 1.10 `
-            --settings '{\"commandToExecute\": \"powershell -ExecutionPolicy Unrestricted -Command Get-NetAdapter | Set-NetIPInterface -Forwarding Enabled\"}'
+                --resource-group $resourcegroup1name `
+                --vm-name "az104-06-vm0" `
+                --name CustomScriptExtension `
+                --publisher Microsoft.Compute `
+                --version 1.9 `
+                --settings '{\"commandToExecute\": \"powershell -ExecutionPolicy Unrestricted -Command Install-WindowsFeature RemoteAccess -IncludeManagementTools\"}'
+    
+                az vm extension set `
+                --resource-group $resourcegroup1name `
+                --vm-name "az104-06-vm0" `
+                --name CustomScriptExtension `
+                --publisher Microsoft.Compute `
+                --version 1.9 `
+                --settings '{\"commandToExecute\": \"powershell -ExecutionPolicy Unrestricted -Command Install-WindowsFeature -Name Routing -IncludeManagementTools -IncludeAllSubFeature\"}'
+    
+                az vm extension set `
+                --resource-group $resourcegroup1name `
+                --vm-name "az104-06-vm0" `
+                --name CustomScriptExtension `
+                --publisher Microsoft.Compute `
+                --version 1.9 `
+                --settings '{\"commandToExecute\": \"powershell -ExecutionPolicy Unrestricted -Command Install-WindowsFeature -Name RSAT-RemoteAccess-PowerShell\"}'
+    
+                az vm extension set `
+                --resource-group $resourcegroup1name `
+                --vm-name "az104-06-vm0" `
+                --name CustomScriptExtension `
+                --publisher Microsoft.Compute `
+                --version 1.9 `
+                --settings '{\"commandToExecute\": \"powershell -ExecutionPolicy Unrestricted -Command Install-RemoteAccess -Vpntype RoutingOnly\"}'
+    
+                az vm extension set `
+                --resource-group $resourcegroup1name `
+                --vm-name "az104-06-vm0" `
+                --name CustomScriptExtension `
+                --publisher Microsoft.Compute `
+                --version 1.9 `
+                --settings '{\"commandToExecute\": \"powershell -ExecutionPolicy Unrestricted -Command Set-NetIPInterface -InterfaceAlias "Ethernet" -Forwarding Enabled\"}'
+        }else {
+            Write-Error "The virtual machine 'az104-06-vm0' wasn't created."
+        }
 
     }catch{
         Write-Error "An error was caught: $_"
