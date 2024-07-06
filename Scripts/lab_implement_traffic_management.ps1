@@ -2,7 +2,7 @@
 #Author:            Jesus Lopez Mesia
 #Linkedin:          https://www.linkedin.com/in/susejzepol/
 #Created date:      June-03-2024
-#Modified date:     July-03-2024
+#Modified date:     July-06-2024
 #Lab:               https://learn.microsoft.com/en-us/training/modules/configure-azure-load-balancer/9-simulation-load-balancer
 
 
@@ -16,12 +16,6 @@ param(
     #JLopez: Resource group names to deploy the resources in the current azure subscription.
     [Parameter(Mandatory=$true, HelpMessage="Name of the first resource group (this rg contains 4 virtual machines and 3 vnets + peering) to deploy.")]
     [string]$resourcegroup1name,
-
-    # [Parameter(Mandatory=$true, HelpMessage="Name of the second resource group (this rg contains the first gateway with a public IP) to deploy.")]
-    # [string]$resourcegroup2name,
-
-    # [Parameter(Mandatory=$true, HelpMessage="Name of the third resource group (this rg contains the second gateway with a public IP) to deploy.")]
-    # [string]$resourcegroup3name,
 
     #JLopez: Virtuals nework names
     [Parameter(Mandatory=$true, HelpMessage="Virtual nework 1 name (this vnet contains the first 2 virtual machines).")]
@@ -45,7 +39,7 @@ Write-Host ""
 Write-Host ""
 Write-Host "********************************************"
 Write-Host "   #Author:            Jesus Lopez Mesia"
-Write-Host "   #Modified date:     July-03-2024"
+Write-Host "   #Modified date:     July-06-2024"
 Write-Host "********************************************"
 Write-Host ""
 
@@ -59,14 +53,6 @@ Write-Host "Starting to create the 3 resource groups in the same region ($Locati
 az group create --location $Location `
     --resource-group $resourcegroup1name `
     --tags project=az104lab03
-
-# az group create --location $Location `
-#     --resource-group $resourcegroup2name `
-#     --tags project=az104lab03
-
-# az group create --location $Location `
-#     --resource-group $resourcegroup3name `
-#     --tags project=az104lab03
 
 Write-Host "Creating the 3 virtual networks in the same region ($Location)."
 
@@ -98,7 +84,7 @@ Write-Host "Creating the virtual machines in each vnet."
 Write-Host "Enter the password for the user $vmUserName."
 
     try {
-        $pass = Read-Host "Enter your password: " -MaskInput
+        $pass = Read-Host "Enter your password " -MaskInput
 
         Write-Host "Creating the virtual machines for $vnet1Name vnet."
 
@@ -130,6 +116,8 @@ Write-Host "Enter the password for the user $vmUserName."
 
         $vms = az vm list --resource-group $resourcegroup1name --query "[].name" -o tsv
 
+        #JLopez-20240706: To see the full version table for an specific publisher you can use: az vm extension image list-versions --location "West US" --publisher "Microsoft.Azure.NetworkWatcher" --name "NetworkWatcherAgentWindows" --output table
+
         foreach($vm in $vms){
             
             Write-Host "Setting extension for VM: $vm."
@@ -137,8 +125,7 @@ Write-Host "Enter the password for the user $vmUserName."
                 --resource-group $resourcegroup1name `
                 --vm-name $vm `
                 --name "NetworkWatcherAgentWindows" `
-                --publisher "Microsoft.Azure.NetworkWatcher" `
-                --version 1.9
+                --publisher "Microsoft.Azure.NetworkWatcher" 
         }
 
         Write-Host "Configuring peerings from $vnet1Name to $vnet2Name."
@@ -197,7 +184,7 @@ Write-Host "Enter the password for the user $vmUserName."
                 --version 1.9 `
                 --settings '{\"commandToExecute\": \"powershell -ExecutionPolicy Unrestricted -Command Install-WindowsFeature RemoteAccess -IncludeManagementTools\"}'
     
-                az vm extension set `
+            az vm extension set `
                 --resource-group $resourcegroup1name `
                 --vm-name "az104-06-vm0" `
                 --name CustomScriptExtension `
@@ -205,7 +192,7 @@ Write-Host "Enter the password for the user $vmUserName."
                 --version 1.9 `
                 --settings '{\"commandToExecute\": \"powershell -ExecutionPolicy Unrestricted -Command Install-WindowsFeature -Name Routing -IncludeManagementTools -IncludeAllSubFeature\"}'
     
-                az vm extension set `
+            az vm extension set `
                 --resource-group $resourcegroup1name `
                 --vm-name "az104-06-vm0" `
                 --name CustomScriptExtension `
@@ -213,7 +200,7 @@ Write-Host "Enter the password for the user $vmUserName."
                 --version 1.9 `
                 --settings '{\"commandToExecute\": \"powershell -ExecutionPolicy Unrestricted -Command Install-WindowsFeature -Name RSAT-RemoteAccess-PowerShell\"}'
     
-                az vm extension set `
+            az vm extension set `
                 --resource-group $resourcegroup1name `
                 --vm-name "az104-06-vm0" `
                 --name CustomScriptExtension `
@@ -221,14 +208,43 @@ Write-Host "Enter the password for the user $vmUserName."
                 --version 1.9 `
                 --settings '{\"commandToExecute\": \"powershell -ExecutionPolicy Unrestricted -Command Install-RemoteAccess -Vpntype RoutingOnly\"}'
     
-                az vm extension set `
+            az vm extension set `
                 --resource-group $resourcegroup1name `
                 --vm-name "az104-06-vm0" `
                 --name CustomScriptExtension `
                 --publisher Microsoft.Compute `
                 --version 1.9 `
                 --settings '{\"commandToExecute\": \"powershell -ExecutionPolicy Unrestricted -Command Set-NetIPInterface -InterfaceAlias "Ethernet" -Forwarding Enabled\"}'
-        }else {
+            
+            Write-Host "Creating the UDR 'az104-06-r23' over the '$vnet2Name'."
+
+            az network route-table create --name "az104-06-r23" --resource-group $resourcegroup1name --location $Location --disable-bgp-route-propagation true
+
+            az network route-table route create `
+                --route-table-name "az104-06-r23" `
+                --resource-group $resourcegroup1name `
+                --name "az104-06-route-vnet2-to-vnet3" `
+                --address-prefix 10.63.0.0/20 `
+                --next-hop-type "VirtualAppliance" `
+                --next-hop-ip-address 10.60.0.4
+
+            az network vnet subnet update --vnet-name $vnet2Name --name "subnet0" --resource-group $resourcegroup1name --route-table "az104-06-r23"
+
+            Write-Host "Creating the UDR 'az104-06-r32' over the '$vnet3Name'."
+
+            az network route-table create --name "az104-06-r32" --resource-group $resourcegroup1name --location $Location --disable-bgp-route-propagation true
+
+            az network route-table route create `
+                --route-table-name "az104-06-r32" `
+                --resource-group $resourcegroup1name `
+                --name "az104-06-route-vnet3-to-vnet2" `
+                --address-prefix 10.62.0.0/20 `
+                --next-hop-type "VirtualAppliance" `
+                --next-hop-ip-address 10.60.0.4
+
+            az network vnet subnet update --vnet-name $vnet3Name --name "subnet0" --resource-group $resourcegroup1name --route-table "az104-06-r32"
+        
+        } else {
             Write-Error "The virtual machine 'az104-06-vm0' wasn't created."
         }
 
