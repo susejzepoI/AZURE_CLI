@@ -2,7 +2,7 @@
 #Author:            Jesus Lopez Mesia
 #Linkedin:          https://www.linkedin.com/in/susejzepol/
 #Created date:      June-03-2024
-#Modified date:     July-06-2024
+#Modified date:     July-07-2024
 #Lab:               https://learn.microsoft.com/en-us/training/modules/configure-azure-load-balancer/9-simulation-load-balancer
 
 
@@ -39,7 +39,7 @@ Write-Host ""
 Write-Host ""
 Write-Host "********************************************"
 Write-Host "   #Author:            Jesus Lopez Mesia"
-Write-Host "   #Modified date:     July-06-2024"
+Write-Host "   #Modified date:     July-07-2024"
 Write-Host "********************************************"
 Write-Host ""
 
@@ -89,26 +89,26 @@ Write-Host "Enter the password for the user $vmUserName."
         Write-Host "Creating the virtual machines for $vnet1Name vnet."
 
         az vm create --name "az104-06-vm0" --resource-group $resourcegroup1name `
-            --vnet-name $vnet1Name --subnet "subnet0" `
+            --vnet-name $vnet1Name --subnet "subnet0" --tags project=az104lab03 `
             --admin-username $vmUserName --admin-password $pass `
             --image "MicrosoftWindowsServer:WindowsServer:2019-datacenter-gensecond:latest"
         
         az vm create --name "az104-06-vm1" --resource-group $resourcegroup1name `
-            --vnet-name $vnet1Name --subnet "subnet1" `
+            --vnet-name $vnet1Name --subnet "subnet1" --tags project=az104lab03 `
             --admin-username $vmUserName --admin-password $pass `
             --image "MicrosoftWindowsServer:WindowsServer:2019-datacenter-gensecond:latest"
 
         Write-Host "Creating the virtual machine for $vnet2Name vnet."
 
         az vm create --name "az104-06-vm2" --resource-group $resourcegroup1name `
-            --vnet-name $vnet2Name --subnet "subnet0" `
+            --vnet-name $vnet2Name --subnet "subnet0" --tags project=az104lab03 `
             --admin-username $vmUserName --admin-password $pass `
             --image "MicrosoftWindowsServer:WindowsServer:2019-datacenter-gensecond:latest"
 
         Write-Host "Creating the virtual machine for $vnet3Name vnet."
 
         az vm create --name "az104-06-vm3" --resource-group $resourcegroup1name `
-            --vnet-name $vnet3Name --subnet "subnet0" `
+            --vnet-name $vnet3Name --subnet "subnet0" --tags project=az104lab03 `
             --admin-username $vmUserName --admin-password $pass `
             --image "MicrosoftWindowsServer:WindowsServer:2019-datacenter-gensecond:latest"
 
@@ -117,9 +117,7 @@ Write-Host "Enter the password for the user $vmUserName."
         $vms = az vm list --resource-group $resourcegroup1name --query "[].name" -o tsv
 
         #JLopez-20240706: To see the full version table for an specific publisher you can use: az vm extension image list-versions --location "West US" --publisher "Microsoft.Azure.NetworkWatcher" --name "NetworkWatcherAgentWindows" --output table
-
         foreach($vm in $vms){
-            
             Write-Host "Setting extension for VM: $vm."
             az vm extension set `
                 --resource-group $resourcegroup1name `
@@ -134,7 +132,7 @@ Write-Host "Enter the password for the user $vmUserName."
             --name "$vnet1Name-to-$vnet2Name" `
             --vnet-name $vnet1Name `
             --remote-vnet $vnet2Name `
-            --allow-forwarded-traffic false `
+            --allow-forwarded-traffic true `
             --allow-vnet-access true
 
         az network vnet peering create `
@@ -142,7 +140,7 @@ Write-Host "Enter the password for the user $vmUserName."
             --name "$vnet2Name-to-$vnet1Name" `
             --vnet-name $vnet2Name `
             --remote-vnet $vnet1Name `
-            --allow-forwarded-traffic false `
+            --allow-forwarded-traffic true `
             --allow-vnet-access true
             
 
@@ -152,7 +150,7 @@ Write-Host "Enter the password for the user $vmUserName."
             --name "$vnet1Name-to-$vnet3Name" `
             --vnet-name $vnet1Name `
             --remote-vnet $vnet3Name `
-            --allow-forwarded-traffic false `
+            --allow-forwarded-traffic true `
             --allow-vnet-access true
 
         az network vnet peering create `
@@ -160,7 +158,7 @@ Write-Host "Enter the password for the user $vmUserName."
             --name "$vnet3Name-to-$vnet1Name" `
             --vnet-name $vnet3Name `
             --remote-vnet $vnet1Name `
-            --allow-forwarded-traffic false `
+            --allow-forwarded-traffic true `
             --allow-vnet-access true
 
         Write-Host "Configuring ip forwarding for the 'az104-06-vm0' virtual machine."
