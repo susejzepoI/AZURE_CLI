@@ -241,6 +241,63 @@ Write-Host "Enter the password for the user $vmUserName."
                 --next-hop-ip-address 10.60.0.4
 
             az network vnet subnet update --vnet-name $vnet3Name --name "subnet0" --resource-group $resourcegroup1name --route-table "az104-06-r32"
+
+            Write-host "Creating a load balancer"
+
+            az network lb create --name "az104-06-lb4" `
+                --resource-group $resourcegroup1name `
+                --tags project=az104lab03 `
+                --location $Location
+
+            az network public-ip create `
+                --resource-group $resourcegroup1name `
+                --name "az104-06-pip4" `
+                --tags project=az104lab03 `
+                --allocation-method Static `
+                --sku Standard `
+                --tier Regional `
+                --location $Location
+
+            az network lb frontend-ip create `
+                --name "az104-06-fip4" `
+                --resource-group $resourcegroup1name `
+                --lb-name "az104-06-lb4" `
+                --public-ip-address "az104-06-pip4"
+
+            az network lb address-pool create `
+                --address-pool-name "az104-06-lb4-be1" `
+                --lb-name "az104-06-lb4" `
+                --resource-group $resourcegroup1name `
+                --vnet $vnet1Name `
+                --location $Location `
+                --backend-addresses '[
+                    {"name": "addr1", "ip-address": "10.60.0.4", "subnetname": "subnet0"},
+                    {"name": "addr2", "ip-address": "10.60.1.4", "subnetname": "subnet1"},
+                ]'
+
+            az network lb probe create `
+                --lb-name "az104-06-lb4" `
+                --name "az104-06-lb4-hp1" `
+                --protocol "TCP" `
+                --port 80 `
+                --interval 5 `
+                --number-of-probes 2
+
+            az network lb rule create `
+                --lb-name "az104-06-lb4" `
+                --name "az104-06-lb4-lbrule1" `
+                --resource-group $resourcegroup1name `
+                --protocol "TCP" `
+                --backend-pool-name "az104-06-lb4-be1" `
+                --frontend-port 80 `
+                --backend-port 80 `
+                --probe "az104-06-lb4-hp1"
+
+
+
+
+            
+            
         
         } else {
             Write-Error "The virtual machine 'az104-06-vm0' wasn't created."
