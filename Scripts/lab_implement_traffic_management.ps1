@@ -2,7 +2,7 @@
 #Author:            Jesus Lopez Mesia
 #Linkedin:          https://www.linkedin.com/in/susejzepol/
 #Created date:      June-03-2024
-#Modified date:     July-07-2024
+#Modified date:     July-09-2024
 #Lab:               https://learn.microsoft.com/en-us/training/modules/configure-azure-load-balancer/9-simulation-load-balancer
 
 
@@ -39,7 +39,7 @@ Write-Host ""
 Write-Host ""
 Write-Host "********************************************"
 Write-Host "   #Author:            Jesus Lopez Mesia"
-Write-Host "   #Modified date:     July-07-2024"
+Write-Host "   #Modified date:     July-09-2024"
 Write-Host "********************************************"
 Write-Host ""
 
@@ -244,11 +244,6 @@ Write-Host "Enter the password for the user $vmUserName."
 
             Write-host "Creating a load balancer"
 
-            az network lb create --name "az104-06-lb4" `
-                --resource-group $resourcegroup1name `
-                --tags project=az104lab03 `
-                --location $Location
-
             az network public-ip create `
                 --resource-group $resourcegroup1name `
                 --name "az104-06-pip4" `
@@ -256,6 +251,11 @@ Write-Host "Enter the password for the user $vmUserName."
                 --allocation-method Static `
                 --sku Standard `
                 --tier Regional `
+                --location $Location
+
+            az network lb create --name "az104-06-lb4" `
+                --resource-group $resourcegroup1name `
+                --tags project=az104lab03 `
                 --location $Location
 
             az network lb frontend-ip create `
@@ -269,15 +269,12 @@ Write-Host "Enter the password for the user $vmUserName."
                 --lb-name "az104-06-lb4" `
                 --resource-group $resourcegroup1name `
                 --vnet $vnet1Name `
-                --location $Location `
-                --backend-addresses '[
-                    {"name": "addr1", "ip-address": "10.60.0.4", "subnetname": "subnet0"},
-                    {"name": "addr2", "ip-address": "10.60.1.4", "subnetname": "subnet1"},
-                ]'
+                --backend-addresses "[{name:addr1,ip-address:10.60.0.4,subnet:subnet0},{name:addr2,ip-address:10.60.1.4,subnet:subnet1}]"
 
             az network lb probe create `
                 --lb-name "az104-06-lb4" `
                 --name "az104-06-lb4-hp1" `
+                --resource-group $resourcegroup1name `
                 --protocol "TCP" `
                 --port 80 `
                 --interval 5 `
@@ -291,11 +288,8 @@ Write-Host "Enter the password for the user $vmUserName."
                 --backend-pool-name "az104-06-lb4-be1" `
                 --frontend-port 80 `
                 --backend-port 80 `
-                --probe "az104-06-lb4-hp1"
-
-
-
-
+                --probe "az104-06-lb4-hp1" `
+                --frontend-ip "az104-06-fip4"
             
             
         
