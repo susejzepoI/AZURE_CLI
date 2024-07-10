@@ -86,16 +86,57 @@ Write-Host "Enter the password for the user $vmUserName."
     try {
         $pass = Read-Host "Enter your password " -MaskInput
 
+        Write-Host "Creating the NSG for 'az104-06-vm0' and 'az104-06-vm1' virtual machines."
+
+        az network nsg create --name "myNSG" --resource-group $resourcegroup1name
+
+        az network nsg rule create `
+            --resource-group $resourcegroup1name `
+            --nsg-name "myNSG" `
+            --name "default-allow-rdp" `
+            --priority 1000 `
+            --source-port-range "*" `
+            --source-address-prefixes "*" `
+            --destination-address-prefixes "*" `
+            --destination-port-ranges "3389" `
+            --access "Allow" `
+            --protocol "Tcp" `
+            --direction "Inbound" `
+            --description "JLopez: Allow RDP traffic."
+
+            az network nsg rule create `
+            --resource-group $resourcegroup1name `
+            --nsg-name "myNSG" `
+            --name "default-allow-http" `
+            --priority 1100 `
+            --source-port-range "*" `
+            --source-address-prefixes "*" `
+            --destination-address-prefixes "*" `
+            --destination-port-ranges "80" `
+            --access "Allow" `
+            --protocol "Tcp" `
+            --direction "Inbound" `
+            --description "JLopez: Allow RDP traffic."
+
         Write-Host "Creating the virtual machines for $vnet1Name vnet."
 
-        az vm create --name "az104-06-vm0" --resource-group $resourcegroup1name `
-            --vnet-name $vnet1Name --subnet "subnet0" --tags project=az104lab03 `
+        az vm create --name "az104-06-vm0" `
+            --resource-group $resourcegroup1name `
+            --vnet-name $vnet1Name `
+            --subnet "subnet0" `
+            --nsg "myNSG" `
+            --tags project=az104lab03 `
             --admin-username $vmUserName --admin-password $pass `
             --image "MicrosoftWindowsServer:WindowsServer:2019-datacenter-gensecond:latest"
         
-        az vm create --name "az104-06-vm1" --resource-group $resourcegroup1name `
-            --vnet-name $vnet1Name --subnet "subnet1" --tags project=az104lab03 `
-            --admin-username $vmUserName --admin-password $pass `
+        az vm create --name "az104-06-vm1" `
+            --resource-group $resourcegroup1name `
+            --vnet-name $vnet1Name `
+            --subnet "subnet1" `
+            --nsg "myNSG" `
+            --tags project=az104lab03 `
+            --admin-username $vmUserName `
+            --admin-password $pass `
             --image "MicrosoftWindowsServer:WindowsServer:2019-datacenter-gensecond:latest"
 
         Write-Host "Creating the virtual machine for $vnet2Name vnet."
@@ -291,7 +332,22 @@ Write-Host "Enter the password for the user $vmUserName."
                 --probe "az104-06-lb4-hp1" `
                 --frontend-ip "az104-06-fip4"
             
-            
+            Write-Host "Preparing index file for 'az104-06-vm0' and 'az104-06-vm1'."
+            az vm extension set `
+                --resource-group $resourcegroup1name `
+                --vm-name "az104-06-vm0" `
+                --name CustomScriptExtension `
+                --publisher Microsoft.Compute `
+                --version 1.9 `
+                --settings '{\"commandToExecute\": \"powershell -ExecutionPolicy Unrestricted -Command removed-item c:\\inetpub\\wwwroot\\iisstart.htm  && powershell -ExecutionPolicy Unrestricted -Command Add-Content -Path C:\\inetpub\\wwwroot\\iisstart.htm -Value $(\"Hello World from az104-06-vm0"}'
+    
+            az vm extension set `
+                --resource-group $resourcegroup1name `
+                --vm-name "az104-06-vm1" `
+                --name CustomScriptExtension `
+                --publisher Microsoft.Compute `
+                --version 1.9 `
+                --settings '{\"commandToExecute\": \"powershell -ExecutionPolicy Unrestricted -Command removed-item c:\\inetpub\\wwwroot\\iisstart.htm  && powershell -ExecutionPolicy Unrestricted -Command Add-Content -Path C:\\inetpub\\wwwroot\\iisstart.htm -Value $(\"Hello World from az104-06-vm1\"}'
         
         } else {
             Write-Error "The virtual machine 'az104-06-vm0' wasn't created."
