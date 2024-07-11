@@ -339,15 +339,16 @@ Write-Host "Enter the password for the user $vmUserName."
                 --name CustomScriptExtension `
                 --publisher Microsoft.Compute `
                 --version 1.9 `
-                --settings '{\"commandToExecute\": \"powershell -ExecutionPolicy Unrestricted -Command removed-item c:\\inetpub\\wwwroot\\iisstart.htm  && powershell -ExecutionPolicy Unrestricted -Command Add-Content -Path C:\\inetpub\\wwwroot\\iisstart.htm -Value $(\"Hello World from az104-06-vm0"}'
-    
-            az vm extension set `
+                --settings '{\"commandToExecute\": \"powershell -ExecutionPolicy Unrestricted -Command New-Item -Path C:\\inetpub\\wwwroot\\ -ItemType Directory; Add-Content -Path C:\\inetpub\\wwwroot\\iisstart.htm -Value ''Hello World from az104-06-vm0''\"}'
+       
+
+                az vm extension set `
                 --resource-group $resourcegroup1name `
                 --vm-name "az104-06-vm1" `
                 --name CustomScriptExtension `
                 --publisher Microsoft.Compute `
                 --version 1.9 `
-                --settings '{\"commandToExecute\": \"powershell -ExecutionPolicy Unrestricted -Command removed-item c:\\inetpub\\wwwroot\\iisstart.htm  && powershell -ExecutionPolicy Unrestricted -Command Add-Content -Path C:\\inetpub\\wwwroot\\iisstart.htm -Value $(\"Hello World from az104-06-vm1\"}'
+                --settings '{\"commandToExecute\": \"powershell -ExecutionPolicy Unrestricted -Command New-Item -Path C:\\inetpub\\wwwroot\\ -ItemType Directory; Add-Content -Path C:\\inetpub\\wwwroot\\iisstart.htm -Value ''Hello World from az104-06-vm1''\"}'
         
         } else {
             Write-Error "The virtual machine 'az104-06-vm0' wasn't created."
