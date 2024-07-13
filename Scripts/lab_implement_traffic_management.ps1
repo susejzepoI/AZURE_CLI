@@ -2,7 +2,7 @@
 #Author:            Jesus Lopez Mesia
 #Linkedin:          https://www.linkedin.com/in/susejzepol/
 #Created date:      June-03-2024
-#Modified date:     July-09-2024
+#Modified date:     July-13-2024
 #Lab:               https://learn.microsoft.com/en-us/training/modules/configure-azure-load-balancer/9-simulation-load-balancer
 
 
@@ -39,7 +39,7 @@ Write-Host ""
 Write-Host ""
 Write-Host "********************************************"
 Write-Host "   #Author:            Jesus Lopez Mesia"
-Write-Host "   #Modified date:     July-09-2024"
+Write-Host "   #Modified date:     July-13-2024"
 Write-Host "********************************************"
 Write-Host ""
 
@@ -116,7 +116,7 @@ Write-Host "Enter the password for the user $vmUserName."
             --access "Allow" `
             --protocol "Tcp" `
             --direction "Inbound" `
-            --description "JLopez: Allow RDP traffic."
+            --description "JLopez: Allow HTTP traffic."
 
         Write-Host "Creating the virtual machines for $vnet1Name vnet."
 
@@ -207,53 +207,28 @@ Write-Host "Enter the password for the user $vmUserName."
 
         Write-Host "Checking if the virtual machine 'az104-06-vm0' was created."
 
-        $checkVM0 = $(az vm show --resource-group $resourcegroup1name --name "az104-06-vm0" --query "name" --output tsv)
+        #JLopez: Filtering vm0 and vm1 to install extensions.
+        $vmsinvnet1 = $(az vm list --resource-group $resourcegroup1name --query "[].name" -o tsv) -split "`n" | Where-Object {$_ -like "*vm0"-or $_ -like "*vm1"}
 
-        if ($checkVM0) {
+        foreach($vm in $vmsinvnet1)
+        {
             $vm0NicID = $(az vm show --resource-group $resourcegroup1name --name "az104-06-vm0" --query "networkProfile.networkInterfaces[].id" -o tsv)
             az network nic update --ids $vm0NicID --ip-forwarding true
     
-            Write-Host "Configuring settings for the the 'az104-06-vm0' virtual machine."
+            Write-Host "Configuring settings for the the '$vm' virtual machine."
     
             az vm extension set `
                 --resource-group $resourcegroup1name `
-                --vm-name "az104-06-vm0" `
+                --vm-name $vm `
                 --name CustomScriptExtension `
                 --publisher Microsoft.Compute `
                 --version 1.9 `
-                --settings '{\"commandToExecute\": \"powershell -ExecutionPolicy Unrestricted -Command Install-WindowsFeature RemoteAccess -IncludeManagementTools\"}'
-    
-            az vm extension set `
-                --resource-group $resourcegroup1name `
-                --vm-name "az104-06-vm0" `
-                --name CustomScriptExtension `
-                --publisher Microsoft.Compute `
-                --version 1.9 `
-                --settings '{\"commandToExecute\": \"powershell -ExecutionPolicy Unrestricted -Command Install-WindowsFeature -Name Routing -IncludeManagementTools -IncludeAllSubFeature\"}'
-    
-            az vm extension set `
-                --resource-group $resourcegroup1name `
-                --vm-name "az104-06-vm0" `
-                --name CustomScriptExtension `
-                --publisher Microsoft.Compute `
-                --version 1.9 `
-                --settings '{\"commandToExecute\": \"powershell -ExecutionPolicy Unrestricted -Command Install-WindowsFeature -Name RSAT-RemoteAccess-PowerShell\"}'
-    
-            az vm extension set `
-                --resource-group $resourcegroup1name `
-                --vm-name "az104-06-vm0" `
-                --name CustomScriptExtension `
-                --publisher Microsoft.Compute `
-                --version 1.9 `
-                --settings '{\"commandToExecute\": \"powershell -ExecutionPolicy Unrestricted -Command Install-RemoteAccess -Vpntype RoutingOnly\"}'
-    
-            az vm extension set `
-                --resource-group $resourcegroup1name `
-                --vm-name "az104-06-vm0" `
-                --name CustomScriptExtension `
-                --publisher Microsoft.Compute `
-                --version 1.9 `
-                --settings '{\"commandToExecute\": \"powershell -ExecutionPolicy Unrestricted -Command Set-NetIPInterface -InterfaceAlias "Ethernet" -Forwarding Enabled\"}'
+                --settings '{\"commandToExecute\": \"powershell -ExecutionPolicy Unrestricted -Command Install-WindowsFeature RemoteAccess -IncludeManagementTools; Install-WindowsFeature -Name Routing -IncludeManagementTools -IncludeAllSubFeature; Install-WindowsFeature -Name RSAT-RemoteAccess-PowerShell; Install-RemoteAccess -Vpntype RoutingOnly; Set-NetIPInterface -InterfaceAlias "Ethernet" -Forwarding Enabled\"}'
+        }
+
+        $checkVM0 = $(az vm show --resource-group $resourcegroup1name --name "az104-06-vm0" --query "name" --output tsv)
+
+        if ($checkVM0) {
             
             Write-Host "Creating the UDR 'az104-06-r23' over the '$vnet2Name'."
 
@@ -339,7 +314,7 @@ Write-Host "Enter the password for the user $vmUserName."
                 --name CustomScriptExtension `
                 --publisher Microsoft.Compute `
                 --version 1.9 `
-                --settings '{\"commandToExecute\": \"powershell -ExecutionPolicy Unrestricted -Command New-Item -Path C:\\inetpub\\wwwroot\\ -ItemType Directory; Add-Content -Path C:\\inetpub\\wwwroot\\iisstart.htm -Value ''Hello World from az104-06-vm0''\"}'
+                --settings '{\"commandToExecute\": \"powershell -ExecutionPolicy Unrestricted -Command New-Item -Path C:\\inetpub\\wwwroot\\ -ItemType Directory; Add-Content -Path C:\\inetpub\\wwwroot\\iisstart.htm -Value ''Hello world, you''re using Azure load balancer from the az104-06-vm0 virtual machine.''\"}'
        
 
                 az vm extension set `
@@ -348,7 +323,7 @@ Write-Host "Enter the password for the user $vmUserName."
                 --name CustomScriptExtension `
                 --publisher Microsoft.Compute `
                 --version 1.9 `
-                --settings '{\"commandToExecute\": \"powershell -ExecutionPolicy Unrestricted -Command New-Item -Path C:\\inetpub\\wwwroot\\ -ItemType Directory; Add-Content -Path C:\\inetpub\\wwwroot\\iisstart.htm -Value ''Hello World from az104-06-vm1''\"}'
+                --settings '{\"commandToExecute\": \"powershell -ExecutionPolicy Unrestricted -Command New-Item -Path C:\\inetpub\\wwwroot\\ -ItemType Directory; Add-Content -Path C:\\inetpub\\wwwroot\\iisstart.htm -Value ''Hello world, you''re using Azure load balancer from the az104-06-vm1 virtual machine.''\"}'
         
         } else {
             Write-Error "The virtual machine 'az104-06-vm0' wasn't created."
