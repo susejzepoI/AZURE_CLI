@@ -314,7 +314,7 @@ Write-Host "Enter the password for the user $vmUserName."
                 --name CustomScriptExtension `
                 --publisher Microsoft.Compute `
                 --version 1.9 `
-                --settings '{\"commandToExecute\": \"powershell -ExecutionPolicy Unrestricted -Command New-Item -Path C:\\inetpub\\wwwroot\\ -ItemType Directory; Add-Content -Path C:\\inetpub\\wwwroot\\iisstart.htm -Value ''Hello world, you''re using Azure load balancer from the az104-06-vm0 virtual machine.''\"}'
+                --settings '{\"commandToExecute\": \"powershell -ExecutionPolicy Unrestricted -Command New-Item -Path C:\\inetpub\\wwwroot\\ -ItemType Directory; Add-Content -Path C:\\inetpub\\wwwroot\\iisstart.htm -Value ''Hello world, you are using Azure load balancer from the az104-06-vm0 virtual machine.''\"}'
        
 
                 az vm extension set `
@@ -323,7 +323,7 @@ Write-Host "Enter the password for the user $vmUserName."
                 --name CustomScriptExtension `
                 --publisher Microsoft.Compute `
                 --version 1.9 `
-                --settings '{\"commandToExecute\": \"powershell -ExecutionPolicy Unrestricted -Command New-Item -Path C:\\inetpub\\wwwroot\\ -ItemType Directory; Add-Content -Path C:\\inetpub\\wwwroot\\iisstart.htm -Value ''Hello world, you''re using Azure load balancer from the az104-06-vm1 virtual machine.''\"}'
+                --settings '{\"commandToExecute\": \"powershell -ExecutionPolicy Unrestricted -Command New-Item -Path C:\\inetpub\\wwwroot\\ -ItemType Directory; Add-Content -Path C:\\inetpub\\wwwroot\\iisstart.htm -Value ''Hello world, you are using Azure load balancer from the az104-06-vm1 virtual machine.''\"}'
         
         } else {
             Write-Error "The virtual machine 'az104-06-vm0' wasn't created."
