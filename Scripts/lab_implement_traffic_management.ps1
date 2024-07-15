@@ -317,7 +317,7 @@ Write-Host "Enter the password for the user $vmUserName."
                 --settings '{\"commandToExecute\": \"powershell -ExecutionPolicy Unrestricted -Command New-Item -Path C:\\inetpub\\wwwroot\\ -ItemType Directory; Add-Content -Path C:\\inetpub\\wwwroot\\iisstart.htm -Value ''Hello world, you are using Azure load balancer from the az104-06-vm0 virtual machine.''\"}'
        
 
-                az vm extension set `
+            az vm extension set `
                 --resource-group $resourcegroup1name `
                 --vm-name "az104-06-vm1" `
                 --name CustomScriptExtension `
@@ -325,6 +325,59 @@ Write-Host "Enter the password for the user $vmUserName."
                 --version 1.9 `
                 --settings '{\"commandToExecute\": \"powershell -ExecutionPolicy Unrestricted -Command New-Item -Path C:\\inetpub\\wwwroot\\ -ItemType Directory; Add-Content -Path C:\\inetpub\\wwwroot\\iisstart.htm -Value ''Hello world, you are using Azure load balancer from the az104-06-vm1 virtual machine.''\"}'
         
+            Write-Host "Creating the network application-gateway" -BackgroundColor DarkGray
+
+            az network public-ip create `
+                --resource-group $resourcegroup1name `
+                --name "az104-06-pip5" `
+                --tags project=az104lab03 `
+                --allocation-method Static `
+                --sku Standard `
+                --tier Regional `
+                --location $Location
+            
+            az network application-gateway create `
+                --name "az104-06-rg1-az104jl" `
+                --resource-group $resourcegroup1name `
+                --location $Location `
+                --public-ip-address "az104-06-pip5" `
+                --capacity 2 `
+                --sku "Standard_v2" `
+                --priority 1001 `
+                --subnet "subnet-appgw" `
+                --frontend-port 80 `
+                --tags az104lab03
+
+            az network application-gateway address-pool create `
+                --gateway-name "az104-06-rg1-az104jl" `
+                --name "az104-06-appgw5-be1" `
+                --resource-group $resourcegroup1name `
+                --servers 10.60.0.4 10.60.1.4
+
+            az network application-gateway http-listener create `
+                --resource-group $resourcegroup1name `
+                --gateway-name "az104-06-rg1-az104jl" `
+                --name "az104-06-appgw5-rl1l1" `
+                --frontend-port 80
+
+            az network application-gateway http-settings create `
+                --gateway-name "az104-06-rg1-az104jl" `
+                --name "az104-06-appgw5-http1" `
+                --port 80 `
+                --protocol "Http" `
+                --timeout 20
+
+            az network application-gateway routing-rule create `
+                --gateway-name "az104-06-rg1-az104jl" `
+                --name "az104-06-appgw5-rl1" `
+                --resource-group $resourcegroup1name `
+                --address-pool "az104-06-appgw5-be1" `
+                --listener "az104-06-appgw5-rl1l1" `
+                --settings "az104-06-appgw5-http1" `
+                --priority 1 `
+                --rule-type "Basic"
+
+
         } else {
             Write-Error "The virtual machine 'az104-06-vm0' wasn't created."
         }
