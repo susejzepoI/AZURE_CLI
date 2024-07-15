@@ -345,7 +345,6 @@ Write-Host "Enter the password for the user $vmUserName."
                 --sku "Standard_v2" `
                 --priority 1001 `
                 --subnet "subnet-appgw" `
-                --frontend-port 80 `
                 --tags az104lab03
 
             az network application-gateway address-pool create `
@@ -354,17 +353,24 @@ Write-Host "Enter the password for the user $vmUserName."
                 --resource-group $resourcegroup1name `
                 --servers 10.60.0.4 10.60.1.4
 
+            az network application-gateway frontend-port create `
+                --gateway-name "az104-06-rg1-az104jl" `
+                --name "MyFrontEndPort80" `
+                --resource-group $resourcegroup1name `
+                --port 80
+
             az network application-gateway http-listener create `
                 --resource-group $resourcegroup1name `
                 --gateway-name "az104-06-rg1-az104jl" `
                 --name "az104-06-appgw5-rl1l1" `
-                --frontend-port 80
+                --frontend-port "MyFrontEndPort80"
 
             az network application-gateway http-settings create `
                 --gateway-name "az104-06-rg1-az104jl" `
                 --name "az104-06-appgw5-http1" `
                 --port 80 `
                 --protocol "Http" `
+                --resource-group $resourcegroup1name `
                 --timeout 20
 
             az network application-gateway routing-rule create `
