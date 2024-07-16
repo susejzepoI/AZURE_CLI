@@ -48,13 +48,13 @@ Write-Host "Location: $Location"
 Write-Host "Resource groups: $resourcegroup1name."
 Write-Host "Vnets Names: $vnet1Name, $vnet2Name, $vnet3Name."
 
-Write-Host "Starting to create the 3 resource groups in the same region ($Location)."
+Write-Host "Starting to create the 3 resource groups in the same region ($Location)."  -BackgroundColor DarkGray
 
 az group create --location $Location `
     --resource-group $resourcegroup1name `
     --tags project=az104lab03
 
-Write-Host "Creating the 3 virtual networks in the same region ($Location)."
+Write-Host "Creating the 3 virtual networks in the same region ($Location)."  -BackgroundColor DarkGray
 
 az network vnet create --name $vnet1Name `
     --resource-group $resourcegroup1name `
@@ -79,14 +79,14 @@ az network vnet create --name $vnet3Name `
     --subnet-name "Subnet0" `
     --subnet-prefixes 10.63.0.0/24
 
-Write-Host "Creating the virtual machines in each vnet."
+Write-Host "Creating the virtual machines in each vnet."  -BackgroundColor DarkGray
 
-Write-Host "Enter the password for the user $vmUserName."
+Write-Host "Enter the password for the user $vmUserName."  -BackgroundColor DarkGray
 
     try {
         $pass = Read-Host "Enter your password " -MaskInput
 
-        Write-Host "Creating the NSG for 'az104-06-vm0' and 'az104-06-vm1' virtual machines."
+        Write-Host "Creating the NSG for 'az104-06-vm0' and 'az104-06-vm1' virtual machines."  -BackgroundColor DarkGray
 
         az network nsg create --name "myNSG" --resource-group $resourcegroup1name
 
@@ -118,7 +118,7 @@ Write-Host "Enter the password for the user $vmUserName."
             --direction "Inbound" `
             --description "JLopez: Allow HTTP traffic."
 
-        Write-Host "Creating the virtual machines for $vnet1Name vnet."
+        Write-Host "Creating the virtual machines for $vnet1Name vnet."  -BackgroundColor DarkGray
 
         az vm create --name "az104-06-vm0" `
             --resource-group $resourcegroup1name `
@@ -139,21 +139,21 @@ Write-Host "Enter the password for the user $vmUserName."
             --admin-password $pass `
             --image "MicrosoftWindowsServer:WindowsServer:2019-datacenter-gensecond:latest"
 
-        Write-Host "Creating the virtual machine for $vnet2Name vnet."
+        Write-Host "Creating the virtual machine for $vnet2Name vnet."  -BackgroundColor DarkGray
 
         az vm create --name "az104-06-vm2" --resource-group $resourcegroup1name `
             --vnet-name $vnet2Name --subnet "subnet0" --tags project=az104lab03 `
             --admin-username $vmUserName --admin-password $pass `
             --image "MicrosoftWindowsServer:WindowsServer:2019-datacenter-gensecond:latest"
 
-        Write-Host "Creating the virtual machine for $vnet3Name vnet."
+        Write-Host "Creating the virtual machine for $vnet3Name vnet."  -BackgroundColor DarkGray
 
         az vm create --name "az104-06-vm3" --resource-group $resourcegroup1name `
             --vnet-name $vnet3Name --subnet "subnet0" --tags project=az104lab03 `
             --admin-username $vmUserName --admin-password $pass `
             --image "MicrosoftWindowsServer:WindowsServer:2019-datacenter-gensecond:latest"
 
-        Write-Host "Creating the network watcher for each virtual machine."
+        Write-Host "Creating the network watcher for each virtual machine."  -BackgroundColor DarkGray
 
         $vms = az vm list --resource-group $resourcegroup1name --query "[].name" -o tsv
 
@@ -167,7 +167,7 @@ Write-Host "Enter the password for the user $vmUserName."
                 --publisher "Microsoft.Azure.NetworkWatcher" 
         }
 
-        Write-Host "Configuring peerings from $vnet1Name to $vnet2Name."
+        Write-Host "Configuring peerings from $vnet1Name to $vnet2Name."  -BackgroundColor DarkGray
         az network vnet peering create `
             --resource-group $resourcegroup1name `
             --name "$vnet1Name-to-$vnet2Name" `
@@ -185,7 +185,7 @@ Write-Host "Enter the password for the user $vmUserName."
             --allow-vnet-access true
             
 
-        Write-Host "Configuring peerings from $vnet1Name to $vnet3Name."
+        Write-Host "Configuring peerings from $vnet1Name to $vnet3Name."  -BackgroundColor DarkGray
         az network vnet peering create `
             --resource-group $resourcegroup1name `
             --name "$vnet1Name-to-$vnet3Name" `
@@ -202,10 +202,10 @@ Write-Host "Enter the password for the user $vmUserName."
             --allow-forwarded-traffic true `
             --allow-vnet-access true
 
-        Write-Host "Configuring ip forwarding for the 'az104-06-vm0' virtual machine."
+        Write-Host "Configuring ip forwarding for the 'az104-06-vm0' virtual machine."  -BackgroundColor DarkGray
 
 
-        Write-Host "Checking if the virtual machine 'az104-06-vm0' was created."
+        Write-Host "Checking if the virtual machine 'az104-06-vm0' was created."  -BackgroundColor DarkGray
 
         #JLopez: Filtering vm0 and vm1 to install extensions.
         $vmsinvnet1 = $(az vm list --resource-group $resourcegroup1name --query "[].name" -o tsv) -split "`n" | Where-Object {$_ -like "*vm0"-or $_ -like "*vm1"}
@@ -215,7 +215,7 @@ Write-Host "Enter the password for the user $vmUserName."
             $vm0NicID = $(az vm show --resource-group $resourcegroup1name --name "az104-06-vm0" --query "networkProfile.networkInterfaces[].id" -o tsv)
             az network nic update --ids $vm0NicID --ip-forwarding true
     
-            Write-Host "Configuring settings for the the '$vm' virtual machine."
+            Write-Host "Configuring settings for the the '$vm' virtual machine."  -BackgroundColor DarkGray
     
             az vm extension set `
                 --resource-group $resourcegroup1name `
@@ -230,7 +230,7 @@ Write-Host "Enter the password for the user $vmUserName."
 
         if ($checkVM0) {
             
-            Write-Host "Creating the UDR 'az104-06-r23' over the '$vnet2Name'."
+            Write-Host "Creating the UDR 'az104-06-r23' over the '$vnet2Name'."  -BackgroundColor DarkGray
 
             az network route-table create --name "az104-06-r23" --resource-group $resourcegroup1name --location $Location --disable-bgp-route-propagation true
 
@@ -244,7 +244,7 @@ Write-Host "Enter the password for the user $vmUserName."
 
             az network vnet subnet update --vnet-name $vnet2Name --name "subnet0" --resource-group $resourcegroup1name --route-table "az104-06-r23"
 
-            Write-Host "Creating the UDR 'az104-06-r32' over the '$vnet3Name'."
+            Write-Host "Creating the UDR 'az104-06-r32' over the '$vnet3Name'."  -BackgroundColor DarkGray
 
             az network route-table create --name "az104-06-r32" --resource-group $resourcegroup1name --location $Location --disable-bgp-route-propagation true
 
@@ -258,7 +258,7 @@ Write-Host "Enter the password for the user $vmUserName."
 
             az network vnet subnet update --vnet-name $vnet3Name --name "subnet0" --resource-group $resourcegroup1name --route-table "az104-06-r32"
 
-            Write-host "Creating a load balancer"
+            Write-host "Creating a load balancer"  -BackgroundColor DarkGray
 
             az network public-ip create `
                 --resource-group $resourcegroup1name `
@@ -307,7 +307,7 @@ Write-Host "Enter the password for the user $vmUserName."
                 --probe "az104-06-lb4-hp1" `
                 --frontend-ip "az104-06-fip4"
             
-            Write-Host "Preparing index file for 'az104-06-vm0' and 'az104-06-vm1'."
+            Write-Host "Preparing index file for 'az104-06-vm0' and 'az104-06-vm1'."  -BackgroundColor DarkGray
             az vm extension set `
                 --resource-group $resourcegroup1name `
                 --vm-name "az104-06-vm0" `
@@ -344,45 +344,17 @@ Write-Host "Enter the password for the user $vmUserName."
                 --capacity 2 `
                 --sku "Standard_v2" `
                 --priority 1001 `
+                --vnet-name $vnet1Name `
                 --subnet "subnet-appgw" `
-                --tags az104lab03
+                --frontend-port 80 `
+                --servers 10.60.0.4 10.60.1.4 `
+                --http-settings-port 80 `
+                --http-settings-protocol "Http" `
+                --connection-draining-timeout 20 `
+                --routing-rule-type "Basic" `
+                --tags Project=az104lab03
 
-            az network application-gateway address-pool create `
-                --gateway-name "az104-06-rg1-az104jl" `
-                --name "az104-06-appgw5-be1" `
-                --resource-group $resourcegroup1name `
-                --servers 10.60.0.4 10.60.1.4
-
-            az network application-gateway frontend-port create `
-                --gateway-name "az104-06-rg1-az104jl" `
-                --name "MyFrontEndPort80" `
-                --resource-group $resourcegroup1name `
-                --port 80
-
-            az network application-gateway http-listener create `
-                --resource-group $resourcegroup1name `
-                --gateway-name "az104-06-rg1-az104jl" `
-                --name "az104-06-appgw5-rl1l1" `
-                --frontend-port "MyFrontEndPort80"
-
-            az network application-gateway http-settings create `
-                --gateway-name "az104-06-rg1-az104jl" `
-                --name "az104-06-appgw5-http1" `
-                --port 80 `
-                --protocol "Http" `
-                --resource-group $resourcegroup1name `
-                --timeout 20
-
-            az network application-gateway routing-rule create `
-                --gateway-name "az104-06-rg1-az104jl" `
-                --name "az104-06-appgw5-rl1" `
-                --resource-group $resourcegroup1name `
-                --address-pool "az104-06-appgw5-be1" `
-                --listener "az104-06-appgw5-rl1l1" `
-                --settings "az104-06-appgw5-http1" `
-                --priority 1 `
-                --rule-type "Basic"
-
+            Write-Host "All done!!!" -BackgroundColor DarkGreen
 
         } else {
             Write-Error "The virtual machine 'az104-06-vm0' wasn't created."
