@@ -309,29 +309,20 @@ Write-Host "Enter the password for the user $vmUserName."  -BackgroundColor Dark
             
             Write-Host "Preparing index file for 'az104-06-vm0' and 'az104-06-vm1'."  -BackgroundColor DarkGray
 
-            $htmlContent =  @"
-<h1 style="color: blue; font-size: 24px; font-weight: bold;"> Hello world, you are using Azure load balancer from the az104-06-vm0 virtual machine.</h1>
-"@
-
             az vm extension set `
                 --resource-group $resourcegroup1name `
                 --vm-name "az104-06-vm0" `
                 --name CustomScriptExtension `
                 --publisher Microsoft.Compute `
                 --version 1.9 `
-                --settings '{\"commandToExecute\": \"powershell -ExecutionPolicy Unrestricted -Command New-Item -Path C:\\inetpub\\wwwroot\\ -ItemType Directory; Add-Content -Path C:\\inetpub\\wwwroot\\iisstart.htm -Value $htmlContent\"}'
-       
-            $htmlContent =  @"
-<h1 style="color: blue; font-size: 24px; font-weight: bold;"> Hello world, you are using Azure load balancer from the az104-06-vm1 virtual machine.</h1>
-"@
-
+                --settings '{\"commandToExecute\": \"powershell -ExecutionPolicy Unrestricted -Command New-Item -Path C:\\inetpub\\wwwroot\\ -ItemType Directory; Add-Content -Path C:\\inetpub\\wwwroot\\iisstart.htm -Value  Hello world, you are using Azure load balancer from the az104-06-vm0 virtual machine.\"}'
             az vm extension set `
                 --resource-group $resourcegroup1name `
                 --vm-name "az104-06-vm1" `
                 --name CustomScriptExtension `
                 --publisher Microsoft.Compute `
                 --version 1.9 `
-                --settings '{\"commandToExecute\": \"powershell -ExecutionPolicy Unrestricted -Command New-Item -Path C:\\inetpub\\wwwroot\\ -ItemType Directory; Add-Content -Path C:\\inetpub\\wwwroot\\iisstart.htm -Value $htmlContent\"}'
+                --settings '{\"commandToExecute\": \"powershell -ExecutionPolicy Unrestricted -Command New-Item -Path C:\\inetpub\\wwwroot\\ -ItemType Directory; Add-Content -Path C:\\inetpub\\wwwroot\\iisstart.htm -Value  Hello world, you are using Azure load balancer from the az104-06-vm1 virtual machine.\"}'
         
             Write-Host "Creating the network application-gateway" -BackgroundColor DarkGray
 
