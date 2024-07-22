@@ -2,7 +2,7 @@
 #Author:            Jesus Lopez Mesia
 #Linkedin:          https://www.linkedin.com/in/susejzepol/
 #Created date:      June-03-2024
-#Modified date:     July-13-2024
+#Modified date:     July-21-2024
 #Lab:               https://learn.microsoft.com/en-us/training/modules/configure-azure-load-balancer/9-simulation-load-balancer
 
 
@@ -39,7 +39,7 @@ Write-Host ""
 Write-Host ""
 Write-Host "********************************************"
 Write-Host "   #Author:            Jesus Lopez Mesia"
-Write-Host "   #Modified date:     July-13-2024"
+Write-Host "   #Modified date:     July-21-2024"
 Write-Host "********************************************"
 Write-Host ""
 
@@ -207,28 +207,28 @@ Write-Host "Enter the password for the user $vmUserName."  -BackgroundColor Dark
 
         Write-Host "Checking if the virtual machine 'az104-06-vm0' was created."  -BackgroundColor DarkGray
 
-        #JLopez: Filtering vm0 and vm1 to install extensions.
-        $vmsinvnet1 = $(az vm list --resource-group $resourcegroup1name --query "[].name" -o tsv) -split "`n" | Where-Object {$_ -like "*vm0"-or $_ -like "*vm1"}
-
-        foreach($vm in $vmsinvnet1)
-        {
-            $vm0NicID = $(az vm show --resource-group $resourcegroup1name --name "az104-06-vm0" --query "networkProfile.networkInterfaces[].id" -o tsv)
-            az network nic update --ids $vm0NicID --ip-forwarding true
-    
-            Write-Host "Configuring settings for the the '$vm' virtual machine."  -BackgroundColor DarkGray
-    
-            az vm extension set `
-                --resource-group $resourcegroup1name `
-                --vm-name $vm `
-                --name CustomScriptExtension `
-                --publisher Microsoft.Compute `
-                --version 1.9 `
-                --settings '{\"commandToExecute\": \"powershell -ExecutionPolicy Unrestricted -Command Install-WindowsFeature RemoteAccess -IncludeManagementTools; Install-WindowsFeature -Name Routing -IncludeManagementTools -IncludeAllSubFeature; Install-WindowsFeature -Name RSAT-RemoteAccess-PowerShell; Install-RemoteAccess -Vpntype RoutingOnly; Set-NetIPInterface -InterfaceAlias "Ethernet" -Forwarding Enabled\"}'
-        }
-
         $checkVM0 = $(az vm show --resource-group $resourcegroup1name --name "az104-06-vm0" --query "name" --output tsv)
 
         if ($checkVM0) {
+
+            #JLopez: Filtering vm0 and vm1 to install extensions.
+            $vmsinvnet1 = $(az vm list --resource-group $resourcegroup1name --query "[].name" -o tsv) -split "`n" | Where-Object {$_ -like "*vm0"-or $_ -like "*vm1"}
+
+            foreach($vm in $vmsinvnet1)
+            {
+                $vm0NicID = $(az vm show --resource-group $resourcegroup1name --name "az104-06-vm0" --query "networkProfile.networkInterfaces[].id" -o tsv)
+                az network nic update --ids $vm0NicID --ip-forwarding true
+        
+                Write-Host "Configuring settings for the the '$vm' virtual machine."  -BackgroundColor DarkGray
+        
+                az vm extension set `
+                    --resource-group $resourcegroup1name `
+                    --vm-name $vm `
+                    --name CustomScriptExtension `
+                    --publisher Microsoft.Compute `
+                    --version 1.9 `
+                    --settings '{\"commandToExecute\": \"powershell -ExecutionPolicy Unrestricted -Command Install-WindowsFeature RemoteAccess -IncludeManagementTools; Install-WindowsFeature -Name Routing -IncludeManagementTools -IncludeAllSubFeature; Install-WindowsFeature -Name RSAT-RemoteAccess-PowerShell; Install-RemoteAccess -Vpntype RoutingOnly; Set-NetIPInterface -InterfaceAlias "Ethernet" -Forwarding Enabled\"}'
+            }
             
             Write-Host "Creating the UDR 'az104-06-r23' over the '$vnet2Name'."  -BackgroundColor DarkGray
 
@@ -308,14 +308,22 @@ Write-Host "Enter the password for the user $vmUserName."  -BackgroundColor Dark
                 --frontend-ip "az104-06-fip4"
             
             Write-Host "Preparing index file for 'az104-06-vm0' and 'az104-06-vm1'."  -BackgroundColor DarkGray
+
+            $htmlContent =  @"
+<h1 style="color: blue; font-size: 24px; font-weight: bold;"> Hello world, you are using Azure load balancer from the az104-06-vm0 virtual machine.</h1>
+"@
+
             az vm extension set `
                 --resource-group $resourcegroup1name `
                 --vm-name "az104-06-vm0" `
                 --name CustomScriptExtension `
                 --publisher Microsoft.Compute `
                 --version 1.9 `
-                --settings '{\"commandToExecute\": \"powershell -ExecutionPolicy Unrestricted -Command New-Item -Path C:\\inetpub\\wwwroot\\ -ItemType Directory; Add-Content -Path C:\\inetpub\\wwwroot\\iisstart.htm -Value ''Hello world, you are using Azure load balancer from the az104-06-vm0 virtual machine.''\"}'
+                --settings '{\"commandToExecute\": \"powershell -ExecutionPolicy Unrestricted -Command New-Item -Path C:\\inetpub\\wwwroot\\ -ItemType Directory; Add-Content -Path C:\\inetpub\\wwwroot\\iisstart.htm -Value $htmlContent\"}'
        
+            $htmlContent =  @"
+<h1 style="color: blue; font-size: 24px; font-weight: bold;"> Hello world, you are using Azure load balancer from the az104-06-vm1 virtual machine.</h1>
+"@
 
             az vm extension set `
                 --resource-group $resourcegroup1name `
@@ -323,7 +331,7 @@ Write-Host "Enter the password for the user $vmUserName."  -BackgroundColor Dark
                 --name CustomScriptExtension `
                 --publisher Microsoft.Compute `
                 --version 1.9 `
-                --settings '{\"commandToExecute\": \"powershell -ExecutionPolicy Unrestricted -Command New-Item -Path C:\\inetpub\\wwwroot\\ -ItemType Directory; Add-Content -Path C:\\inetpub\\wwwroot\\iisstart.htm -Value ''Hello world, you are using Azure load balancer from the az104-06-vm1 virtual machine.''\"}'
+                --settings '{\"commandToExecute\": \"powershell -ExecutionPolicy Unrestricted -Command New-Item -Path C:\\inetpub\\wwwroot\\ -ItemType Directory; Add-Content -Path C:\\inetpub\\wwwroot\\iisstart.htm -Value $htmlContent\"}'
         
             Write-Host "Creating the network application-gateway" -BackgroundColor DarkGray
 
@@ -357,7 +365,7 @@ Write-Host "Enter the password for the user $vmUserName."  -BackgroundColor Dark
             Write-Host "All done!!!" -BackgroundColor DarkGreen
 
         } else {
-            Write-Error "The virtual machine 'az104-06-vm0' wasn't created."
+            Write-Error "The virtual machines weren't created."
         }
 
     }catch{
