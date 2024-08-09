@@ -136,7 +136,7 @@ az network lb create `
     --public-ip-address $pIP `
     --frontend-ip-name $fIP `
     --backend-pool-name $bIP `
-    --sky "Standard"
+    --sku "Standard"
 
 az network lb probe create `
     --resource-group $rg `
@@ -176,6 +176,6 @@ az network public-ip show `
     --query "[ipAddress]" `
     --output tsv
 
-    Write-Host "_____________________________________________" -BackgroundColor DarkGreen
-    Write-Host "            Load Balancer deployed." -BackgroundColor DarkGreen
-    Write-Host "_____________________________________________" -BackgroundColor DarkGreen
+Write-Host "_____________________________________________" -BackgroundColor DarkGreen
+Write-Host "            Load Balancer deployed." -BackgroundColor DarkGreen
+Write-Host "_____________________________________________" -BackgroundColor DarkGreen
