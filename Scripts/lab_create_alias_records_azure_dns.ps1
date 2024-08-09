@@ -2,7 +2,7 @@
 #Author:            Jesus Lopez Mesia
 #Linkedin:          https://www.linkedin.com/in/susejzepol/
 #Created date:      August-07-2024
-#Modified date:     August-07-2024
+#Modified date:     August-08-2024
 #Lab:               https://learn.microsoft.com/en-us/training/modules/host-domain-azure-dns/6-exercise-create-alias-records
 
 [CmdletBinding()]
@@ -20,6 +20,10 @@ param (
     [string]$subscription
 )
 
+Write-Host "_____________________________________________" -BackgroundColor DarkGreen
+Write-Host "      Starting Virtual machines deploy" -BackgroundColor DarkGreen
+Write-Host "_____________________________________________" -BackgroundColor DarkGreen
+
 date
 
 #JLopez-20240807: Local variables
@@ -27,6 +31,12 @@ $vnet       = "bePortalVnet"
 $subnet     = "bePortalSubnet"
 $nsg        = "bePortalNSG"
 $aset       = "portalAvailabilitySet"
+$pIP        = "myPublicIP"
+$lb         = "myLoadBalancer"
+$hp         = "myHealthProbe"
+$rule       = "myHTTPRule"
+$fIP        = "myFrontEndPool"
+$bIP        = "myBackEndPool"
 
 #JLopez-20240807: Creating a virtual network
 Write-Host "Creating a virtual network" -BackgroundColor DarkGreen
@@ -97,4 +107,75 @@ for ($i = 0; $i -lt 2; $i++) {
         --custom-data utilities\cloud-init.txt
 
 }
-Write-Host "Virtual machines setup completed!" -BackgroundColor DarkGreen
+Write-Host "_____________________________________________" -BackgroundColor DarkGreen
+Write-Host "     virtual machines setup completed!" -BackgroundColor DarkGreen
+Write-Host "_____________________________________________" -BackgroundColor DarkGreen
+
+for ($i = 0; $i -lt 15; $i++) {
+    Write-Host "." -BackgroundColor DarkGreen
+}
+
+Write-Host "_____________________________________________" -BackgroundColor DarkGreen
+Write-Host "      Starting Load Balancer Deploy" -BackgroundColor DarkGreen
+Write-Host "_____________________________________________" -BackgroundColor DarkGreen
+
+#JLopez-20240808: Creating the Public IP address.
+Write-Host "Creating the Public IP address." -BackgroundColor DarkGreen
+az network public-ip create `
+    --resource-group $rg `
+    --location $l `
+    --allocation-method "Static" `
+    --name $pIP `
+    --sku "Standard"
+
+#JLopez-20240808: Creating the Load Balancer configurations.
+Write-Host "Creating the Load Balancer configurations." -BackgroundColor DarkGreen
+az network lb create `
+    --resource-group $rg `
+    --name $lb `
+    --public-ip-address $pIP `
+    --frontend-ip-name $fIP `
+    --backend-pool-name $bIP `
+    --sky "Standard"
+
+az network lb probe create `
+    --resource-group $rg `
+    --lb-name $lb `
+    --name $hp `
+    --protocol "Tcp" `
+    --port 80
+
+az network lb rule create `
+    --resource-group $rg `
+    --lb-name $lb `
+    --name $rule `
+    --protocol "Tcp" `
+    --frontend-port 80 `
+    --backend-port 80 `
+    --frontend-ip-name $fIP `
+    --backend-pool-name $bIP 
+
+#JLopez-20240808: Adding the Load balancer to each NIC.
+Write-Host "Adding the Load balancer to each NIC." -BackgroundColor DarkGreen
+for ($i = 0; $i -lt 2; $i++) {
+    
+    $vmNIC      = "webNIC"   + $i
+
+    az network nic ip-config update `
+        --resource-group $rg `
+        --nic-name $vmNIC `
+        --name ipconfig1 `
+        --lb-name $lb `
+        --lb-address-pools $bIP
+
+}
+
+az network public-ip show `
+    --resource-group $rg `
+    --name $pIP `
+    --query "[ipAddress]" `
+    --output tsv
+
+    Write-Host "_____________________________________________" -BackgroundColor DarkGreen
+    Write-Host "            Load Balancer deployed." -BackgroundColor DarkGreen
+    Write-Host "_____________________________________________" -BackgroundColor DarkGreen
