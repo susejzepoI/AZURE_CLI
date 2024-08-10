@@ -37,6 +37,8 @@ $hp         = "myHealthProbe"
 $rule       = "myHTTPRule"
 $fIP        = "myFrontEndPool"
 $bIP        = "myBackEndPool"
+$date       = Get-Date -Format "ddMMyyyy"
+$dns        = "wideworldimports" + $date + ".com"
 
 #JLopez-20240807: Creating a virtual network
 Write-Host "Creating a virtual network" -BackgroundColor DarkGreen
@@ -108,7 +110,7 @@ for ($i = 0; $i -lt 2; $i++) {
 
 }
 Write-Host "_____________________________________________" -BackgroundColor DarkGreen
-Write-Host "     virtual machines setup completed!" -BackgroundColor DarkGreen
+Write-Host "     virtual machines setup completed!." -BackgroundColor DarkGreen
 Write-Host "_____________________________________________" -BackgroundColor DarkGreen
 
 for ($i = 0; $i -lt 15; $i++) {
@@ -116,7 +118,7 @@ for ($i = 0; $i -lt 15; $i++) {
 }
 
 Write-Host "_____________________________________________" -BackgroundColor DarkGreen
-Write-Host "      Starting Load Balancer Deploy" -BackgroundColor DarkGreen
+Write-Host "      Starting Load Balancer Deploy." -BackgroundColor DarkGreen
 Write-Host "_____________________________________________" -BackgroundColor DarkGreen
 
 #JLopez-20240808: Creating the Public IP address.
@@ -179,3 +181,32 @@ az network public-ip show `
 Write-Host "_____________________________________________" -BackgroundColor DarkGreen
 Write-Host "            Load Balancer deployed." -BackgroundColor DarkGreen
 Write-Host "_____________________________________________" -BackgroundColor DarkGreen
+
+
+Write-Host "_____________________________________________" -BackgroundColor DarkGreen
+Write-Host "            Creating the DNS zone." -BackgroundColor DarkGreen
+Write-Host "_____________________________________________" -BackgroundColor DarkGreen
+
+$idPip = $(az network public-ip show --name $pIP --resource-group $rg --query "id" --output tsv)
+
+#JLopez-20240810: Creating the DNS zone.
+az network dns zone create `
+    --name $dns `
+    --resource-group $rg `
+    --tags Project=az104Test
+
+#JLopez-20240810: Creating the alias record.
+Write-Host "Creating the alias record." -BackgroundColor DarkGreen
+az network dns record-set a create `
+    --name '@' `
+    --resource-group $rg `
+    --zone $dns `
+    --target-resource $idPip
+
+# #JLopez-20240810: Adding the alias record.
+# Write-Host "Adding the alias record." -BackgroundColor DarkGreen
+# az network dns record-set a add-record `
+#     --ipv4-address $pIP `
+#     --record-set-name ''`
+#     --resource-group $rg `
+#     --zone $dns
