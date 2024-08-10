@@ -2,7 +2,7 @@
 #Author:            Jesus Lopez Mesia
 #Linkedin:          https://www.linkedin.com/in/susejzepol/
 #Created date:      August-07-2024
-#Modified date:     August-08-2024
+#Modified date:     August-10-2024
 #Lab:               https://learn.microsoft.com/en-us/training/modules/host-domain-azure-dns/6-exercise-create-alias-records
 
 [CmdletBinding()]
@@ -46,14 +46,16 @@ az network vnet create `
     --resource-group $rg `
     --location $l `
     --name $vnet `
-    --subnet-name $subnet
+    --subnet-name $subnet `
+    --tags Project=az104Test
 
 #JLopez-20240807: Creating a network security group
 Write-Host "Creating a network security group" -BackgroundColor DarkGreen
 az network nsg create `
     --resource-group $rg `
     --location $l `
-    --name $nsg
+    --name $nsg `
+    --tags Project=az104Test
 
 az network nsg rule create `
     --resource-group $rg `
@@ -86,7 +88,10 @@ for ($i = 0; $i -lt 2; $i++) {
 Write-Host "Creating an web availability set" -BackgroundColor DarkGreen
 az vm availability-set create `
     --resource-group $rg `
-    --name $aset
+    --name $aset `
+    --location $l `
+    --tags Project=az104Test
+
 
 
 #JLopez-20240807: Creating each virtual machine
@@ -106,14 +111,16 @@ for ($i = 0; $i -lt 2; $i++) {
         --image Ubuntu2204 `
         --availability-set $aset `
         --generate-ssh-keys `
-        --custom-data utilities\cloud-init.txt
+        --custom-data utilities\cloud-init.txt `
+        --tags Project=az104Test
+        
 
 }
 Write-Host "_____________________________________________" -BackgroundColor DarkGreen
 Write-Host "     virtual machines setup completed!." -BackgroundColor DarkGreen
 Write-Host "_____________________________________________" -BackgroundColor DarkGreen
 
-for ($i = 0; $i -lt 15; $i++) {
+for ($i = 0; $i -lt 25; $i++) {
     Write-Host "." -BackgroundColor DarkGreen
 }
 
@@ -128,7 +135,8 @@ az network public-ip create `
     --location $l `
     --allocation-method "Static" `
     --name $pIP `
-    --sku "Standard"
+    --sku "Standard" `
+    --tags Project=az104Test
 
 #JLopez-20240808: Creating the Load Balancer configurations.
 Write-Host "Creating the Load Balancer configurations." -BackgroundColor DarkGreen
@@ -138,7 +146,8 @@ az network lb create `
     --public-ip-address $pIP `
     --frontend-ip-name $fIP `
     --backend-pool-name $bIP `
-    --sku "Standard"
+    --sku "Standard" `
+    --tags Project=az104Test
 
 az network lb probe create `
     --resource-group $rg `
@@ -179,9 +188,12 @@ az network public-ip show `
     --output tsv
 
 Write-Host "_____________________________________________" -BackgroundColor DarkGreen
-Write-Host "            Load Balancer deployed." -BackgroundColor DarkGreen
+Write-Host "            Load Balancer deployed!." -BackgroundColor DarkGreen
 Write-Host "_____________________________________________" -BackgroundColor DarkGreen
 
+for ($i = 0; $i -lt 25; $i++) {
+    Write-Host "." -BackgroundColor DarkGreen
+}
 
 Write-Host "_____________________________________________" -BackgroundColor DarkGreen
 Write-Host "            Creating the DNS zone." -BackgroundColor DarkGreen
@@ -210,3 +222,7 @@ az network dns record-set a create `
 #     --record-set-name ''`
 #     --resource-group $rg `
 #     --zone $dns
+
+Write-Host "_____________________________________________" -BackgroundColor DarkGreen
+Write-Host "            DNS Zone Deployed!." -BackgroundColor DarkGreen
+Write-Host "_____________________________________________" -BackgroundColor DarkGreen
