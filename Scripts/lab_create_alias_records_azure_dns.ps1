@@ -147,6 +147,7 @@ az network lb create `
     --frontend-ip-name $fIP `
     --backend-pool-name $bIP `
     --sku "Standard" `
+    --location $l `
     --tags Project=az104Test
 
 az network lb probe create `
