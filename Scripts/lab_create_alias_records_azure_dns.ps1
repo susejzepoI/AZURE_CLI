@@ -40,7 +40,7 @@ Write-Host "     Verifying the resource group." -BackgroundColor DarkGreen
 Write-Host "_____________________________________________" -BackgroundColor DarkGreen
 
 #JLopez-20240812: Verifying if the resource group already exists.
-$checkRg = $(az group exists --name $rg)
+$checkRg = -not $(az group exists --name $rg)
 
 if(!$checkRg){
     #JLopez: The resource group does not exists.
@@ -52,7 +52,7 @@ if(!$checkRg){
         --tags Project=az104Test
 }
 
-az group show --name $rg
+# az group show --name $rg
 
 Write-Host "_____________________________________________" -BackgroundColor DarkGreen
 Write-Host "      Resource group validation done!." -BackgroundColor DarkGreen
