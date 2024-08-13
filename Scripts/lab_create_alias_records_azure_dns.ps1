@@ -2,7 +2,7 @@
 #Author:            Jesus Lopez Mesia
 #Linkedin:          https://www.linkedin.com/in/susejzepol/
 #Created date:      August-07-2024
-#Modified date:     August-10-2024
+#Modified date:     August-12-2024
 #Lab:               https://learn.microsoft.com/en-us/training/modules/host-domain-azure-dns/6-exercise-create-alias-records
 
 [CmdletBinding()]
@@ -19,11 +19,6 @@ param (
     [Parameter(Mandatory=$true)]
     [string]$subscription
 )
-
-Write-Host "_____________________________________________" -BackgroundColor DarkGreen
-Write-Host "      Starting Virtual machines deploy" -BackgroundColor DarkGreen
-Write-Host "_____________________________________________" -BackgroundColor DarkGreen
-
 date
 
 #JLopez-20240807: Local variables
@@ -39,6 +34,38 @@ $fIP        = "myFrontEndPool"
 $bIP        = "myBackEndPool"
 $date       = Get-Date -Format "ddMMyyyy"
 $dns        = "wideworldimports" + $date + ".com"
+
+Write-Host "_____________________________________________" -BackgroundColor DarkGreen
+Write-Host "     Verifying the resource group." -BackgroundColor DarkGreen
+Write-Host "_____________________________________________" -BackgroundColor DarkGreen
+
+#JLopez-20240812: Verifying if the resource group already exists.
+$checkRg = $(az group exists --name $rg)
+
+if(!$checkRg){
+    #JLopez: The resource group does not exists.
+    Write-Host "The resource group does not exists." -BackgroundColor DarkGreen
+    az group create `
+        --name $rg `
+        --subscription $subscription `
+        --location $l `
+        --tags Project=az104Test
+}
+
+az group show --name $rg
+
+Write-Host "_____________________________________________" -BackgroundColor DarkGreen
+Write-Host "      Resource group validation done!." -BackgroundColor DarkGreen
+Write-Host "_____________________________________________" -BackgroundColor DarkGreen
+
+for ($i = 0; $i -lt 25; $i++) {
+    Write-Host "." -BackgroundColor DarkGreen
+}
+
+
+Write-Host "_____________________________________________" -BackgroundColor DarkGreen
+Write-Host "      Starting Virtual machines deploy" -BackgroundColor DarkGreen
+Write-Host "_____________________________________________" -BackgroundColor DarkGreen
 
 #JLopez-20240807: Creating a virtual network
 Write-Host "Creating a virtual network" -BackgroundColor DarkGreen
