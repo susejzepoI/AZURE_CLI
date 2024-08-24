@@ -7,10 +7,9 @@
 
 [CmdletBinding()]
 param (
-    [Parameter(Mandatory=$true)]
-    [string]$rg,
-    [Parameter(Mandatory=$true)]
-    [string]$s
+    [string]$rg = "az10420240824",
+    [string]$l = "West US",
+    [string]$s = "Suscripción de Plataformas de MSDN"
 )
 
 #JLopez: Internal variables
@@ -25,9 +24,8 @@ $dmzSubnet      = "dmzSubnet"
 $check_rg = -not $(az group exists --name $rg)
 
 #JLopez: If the resource group not exists.
-Write-Host "The resource group $rg doesn't exists." -BackgroundColor DarkGreen
-if ($check_rg) {
-    
+if (!$check_rg) {
+    Write-Host "The resource group $rg doesn't exists." -BackgroundColor DarkGreen
     #JLopez: Then create the resource group.
     Write-Host "Creating the resource group [$rg]" -BackgroundColor DarkGreen
     az group create `
