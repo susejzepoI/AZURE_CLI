@@ -8,8 +8,8 @@
 [CmdletBinding()]
 param (
     [string]$rg = "az10420240824",
-    [string]$l = "West US",
-    [string]$s = "Suscripción de Plataformas de MSDN"
+    [string]$l  = "West US",
+    [string]$s  = "Suscripción de Plataformas de MSDN"
 )
 
 #JLopez: Internal variables
@@ -21,7 +21,7 @@ $privSubnet     = "privSubnet"
 $dmzSubnet      = "dmzSubnet"
 
 #JLopez: Check if the current resource group exists
-$check_rg = -not $(az group exists --name $rg)
+$check_rg = $(az group exists --name $rg)
 
 #JLopez: If the resource group not exists.
 if (!$check_rg) {
@@ -39,7 +39,7 @@ Write-Host "_____________________________________________" -BackgroundColor Dark
 Write-Host "      Resource group validation done!." -BackgroundColor DarkGreen
 Write-Host "_____________________________________________" -BackgroundColor DarkGreen
 
-for ($i = 0; $i -lt 25; $i++) {
+for ($i = 0; $i -lt 6; $i++) {
     Write-Host ""
 }
 
@@ -83,7 +83,7 @@ Write-Host "_____________________________________________" -BackgroundColor Dark
 Write-Host "        Virtual network was deployed!." -BackgroundColor DarkGreen
 Write-Host "_____________________________________________" -BackgroundColor DarkGreen
 
-for ($i = 0; $i -lt 25; $i++) {
+for ($i = 0; $i -lt 6; $i++) {
     Write-Host ""
 }
 
@@ -95,10 +95,10 @@ Write-Host "_____________________________________________" -BackgroundColor Dark
 az network route-table create `
     --name $route_table `
     --resource-group $rg `
-    --disable-bgp-route-porpagation false
+    --disable-bgp-route-propagation false
 
 #JLopez: Creating the custom route
-Write-Host "Creating the custom route." -BackGroundColor -DarkGreen
+Write-Host "Creating the custom route." -BackgroundColor DarkGreen
 az network route-table route create `
     --route-table-name $route_table `
     --resource-group $rg `
@@ -115,3 +115,7 @@ az network vnet subnet update `
     --resource-group $rg `
     --route-table $route_table
 
+Write-Host "_____________________________________________" -BackgroundColor DarkGreen
+Write-Host "            Route table deployed!." -BackgroundColor DarkGreen
+Write-Host "_____________________________________________" -BackgroundColor DarkGreen
+    
