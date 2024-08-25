@@ -19,12 +19,14 @@ $prodSubnet     = "productionsubnet"
 $pubSubnet      = "publicsubnet"
 $privSubnet     = "privSubnet"
 $dmzSubnet      = "dmzSubnet"
-
+$vm             = "nva"
+$nic_id         = ""
+$nic_name       = ""
 #JLopez: Check if the current resource group exists
-$check_rg = $(az group exists --name $rg)
+$check_rg = -not [bool]::Parse($(az group exists --name $rg))
 
 #JLopez: If the resource group not exists.
-if (!$check_rg) {
+if ($check_rg) {
     Write-Host "The resource group $rg doesn't exists." -BackgroundColor DarkGreen
     #JLopez: Then create the resource group.
     Write-Host "Creating the resource group [$rg]" -BackgroundColor DarkGreen
@@ -119,3 +121,49 @@ Write-Host "_____________________________________________" -BackgroundColor Dark
 Write-Host "            Route table deployed!." -BackgroundColor DarkGreen
 Write-Host "_____________________________________________" -BackgroundColor DarkGreen
     
+for ($i = 0; $i -lt 6; $i++) {
+    Write-Host ""
+}
+
+Write-Host "_____________________________________________" -BackgroundColor DarkGreen
+Write-Host "       Creating the virtual appliance." -BackgroundColor DarkGreen
+Write-Host "_____________________________________________" -BackgroundColor DarkGreen
+
+az vm create `
+    --resource-group $rg `
+    --name $vm `
+    --vnet-name $vnet `
+    --subnet $dmzSubnet `
+    --image Ubuntu2204 `
+    --admin-username "azureuseraz104" `
+    --tags Project=az104Test
+
+#JLopez: Enabling IP forwarding for the VM.
+Write-Host "Enabling IP forwarding for the VM." -BackgroundColor DarkGreen
+
+#Jlopez: Looking for the nic id.
+Write-Host "Looking the NIC Id." -BackgroundColor DarkGreen
+$nic_id = $(az vm nic list --resource-group $rg --vm-name $vm --query "[].{id:id}" --output tsv)
+if($nic_id -ne ""){
+
+    #JLopez: Looking the nic name.
+    Write-Host "Looking the nic name." -BackgroundColor DarkGreen
+    $nic_name = $(az vm nic show --resource-group $rg --vm-name $vm --nic $nic_id --query "{name:name}" --output tsv)
+
+    if($nic_name -ne ""){
+        #JLopez: Update the NIC if was found
+        write-Host "Enabling the NIC IP forwarding." -BackgroundColor DarkGreen
+        az network nic update `
+            --name $nic_name `
+            --resource-group $rg `
+            --ip-forwarding true
+
+        $NVAIP = $(az vm list-ip-addresses --resource-group $rg --name $vm --query "[].virtualMachine.network.publicIpAddresses[*].ipAddress" --output tsv)
+    }
+}
+
+Write-Host "IP forwarding enable on the IP: $NVAIP" -BackgroundColor DarkGreen
+
+Write-Host "_____________________________________________" -BackgroundColor DarkGreen
+Write-Host "       Virtual appliance deployed!." -BackgroundColor DarkGreen
+Write-Host "_____________________________________________" -BackgroundColor DarkGreen
