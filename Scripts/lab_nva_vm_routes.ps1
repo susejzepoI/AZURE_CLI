@@ -2,7 +2,7 @@
 #Author:            Jesus Lopez Mesia
 #Linkedin:          https://www.linkedin.com/in/susejzepol/
 #Created date:      August-21-2024
-#Modified date:     August-24-2024
+#Modified date:     August-27-2024
 #Lab:               https://learn.microsoft.com/en-us/training/modules/control-network-traffic-flow-with-routes/5-exercise-create-nva-vm
 
 [CmdletBinding()]
@@ -22,6 +22,10 @@ $dmzSubnet      = "dmzSubnet"
 $vm             = "nva"
 $nic_id         = ""
 $nic_name       = ""
+$username       = "azureuseraz104"
+$publ_vm        = "Public"
+$priv_vm        = "Private"
+$ssh_command    = "sudo sysctl -w net.ipv4.ip_forward=1; exit;"
 #JLopez: Check if the current resource group exists
 $check_rg = -not [bool]::Parse($(az group exists --name $rg))
 
@@ -162,8 +166,44 @@ if($nic_id -ne ""){
     }
 }
 
+ssh -t -o StrictHostKeyChecking=no $username@$NVAIP $ssh_command
+
 Write-Host "IP forwarding enable on the IP: $NVAIP" -BackgroundColor DarkGreen
 
 Write-Host "_____________________________________________" -BackgroundColor DarkGreen
 Write-Host "       Virtual appliance deployed!." -BackgroundColor DarkGreen
 Write-Host "_____________________________________________" -BackgroundColor DarkGreen
+
+for ($i = 0; $i -lt 6; $i++) {
+    Write-Host ""
+}
+
+Write-Host "_____________________________________________" -BackgroundColor DarkGreen
+Write-Host "      Creating the public and private vms." -BackgroundColor DarkGreen
+Write-Host "_____________________________________________" -BackgroundColor DarkGreen
+
+#JLopez-27082024: Creating the Public virtual machine.
+Write-Host "Creating the public virtual machine." -BackgroundColor DarkGreen
+az vm create `
+    --resource-group $rg `
+    --name $publ_vm `
+    --vnet-name $vnet `
+    --subnet $pubSubnet `
+    --image Ubuntu2204 `
+    --admin-username $username `
+    --no-wait `
+    --custom-data .\utilities\cloud-init1.txt `
+    --tags Project=az104Test
+
+#JLopez-27082024: Creating the Private virtual machine.
+Write-Host "Creating the private virtual machine." -BackgroundColor DarkGreen
+az vm create `
+    --resource-group $rg `
+    --name $priv_vm `
+    --vnet-name $vnet `
+    --subnet $privSubnet `
+    --image Ubuntu2204 `
+    --admin-username $username `
+    --no-wait `
+    --custom-data .\utilities\cloud-init1.txt `
+    --tags Project=az104Test
