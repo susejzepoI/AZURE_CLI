@@ -26,6 +26,7 @@ $username       = "azureuseraz104"
 $publ_vm        = "Public"
 $priv_vm        = "Private"
 $ssh_command    = "sudo sysctl -w net.ipv4.ip_forward=1; exit;"
+$ssh_command2   = "[].virtualMachine.network.publicIpAddresses[*].ipAddress"
 #JLopez: Check if the current resource group exists
 $check_rg = -not [bool]::Parse($(az group exists --name $rg))
 
@@ -162,13 +163,13 @@ if($nic_id -ne ""){
             --resource-group $rg `
             --ip-forwarding true
 
-        $NVAIP = $(az vm list-ip-addresses --resource-group $rg --name $vm --query "[].virtualMachine.network.publicIpAddresses[*].ipAddress" --output tsv)
+        $NVA_IP = $(az vm list-ip-addresses --resource-group $rg --name $vm --query "[].virtualMachine.network.publicIpAddresses[*].ipAddress" --output tsv)
     }
 }
 
-ssh -t -o StrictHostKeyChecking=no $username@$NVAIP $ssh_command
+ssh -t -o StrictHostKeyChecking=no $username@$NVA_IP $ssh_command
 
-Write-Host "IP forwarding enable on the IP: $NVAIP" -BackgroundColor DarkGreen
+Write-Host "IP forwarding enable on the IP: $NVA_IP" -BackgroundColor DarkGreen
 
 Write-Host "_____________________________________________" -BackgroundColor DarkGreen
 Write-Host "       Virtual appliance deployed!." -BackgroundColor DarkGreen
@@ -204,6 +205,24 @@ az vm create `
     --subnet $privSubnet `
     --image Ubuntu2204 `
     --admin-username $username `
-    --no-wait `
     --custom-data .\utilities\cloud-init1.txt `
     --tags Project=az104Test
+
+$PUBLIC_IP = $(az vm list-ip-addresses --resource-group $rg --name $publ_vm --query $ssh_command2 --output tsv)
+
+$PRIVATE_IP = $(az vm list-ip-addresses --resource-group $rg --name $priv_vm --query $ssh_command2 --output tsv)
+
+Write-Host "Public virtual machine IP Address: $PUBLIC_IP." -BackgroundColor DarkGreen
+Write-Host "Private virtual machine IP Address: $PRIVATE_IP." -BackgroundColor DarkGreen
+
+#JLopez-27082024: Trace route from public to private virtual machine.
+Write-Host "Trace route from public to private virtual machine." -BackgroundColor DarkGreen
+ssh -t -o StrictHostKeyChecking=no $username@$PUBLIC_IP 'traceroute private --type=icmp; exit'
+
+#JLopez-27082024: Trace route from private to public virtual machine.
+Write-Host "Trace route from private to public virtual machine." -BackgroundColor DarkGreen
+ssh -t -o StrictHostKeyChecking=no $username@$PRIVATE_IP 'traceroute public --type=icmp; exit'
+
+Write-Host "_____________________________________________" -BackgroundColor DarkGreen
+Write-Host "       Virtual Machines deployed!." -BackgroundColor DarkGreen
+Write-Host "_____________________________________________" -BackgroundColor DarkGreen
