@@ -1,0 +1,2 @@
+powershell:
+ -Command New-Item -Path C:\\inetpub\\wwwroot\\ -ItemType Directory; Add-Content -Path C:\\inetpub\\wwwroot\\iisstart.htm -Value  Hello world, you are using Azure load balancer from the az104-06-vm0 virtual machine.

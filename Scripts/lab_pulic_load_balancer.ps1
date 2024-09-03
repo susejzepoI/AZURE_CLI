@@ -2,7 +2,7 @@
 #Author:            Jesus Lopez Mesia
 #Linkedin:          https://www.linkedin.com/in/susejzepol/
 #Created date:      August-28-2024
-#Modified date:     September-01-2024
+#Modified date:     September-02-2024
 #Lab:               https://learn.microsoft.com/en-us/training/modules/improve-app-scalability-resiliency-with-load-balancer/4-exercise-configure-public-load-balancer?pivots=bash
 
 [CmdletBinding()]
@@ -20,7 +20,7 @@ $vm_name                = "VM"
 $aset                   = "portalAvailabilitySet"
 $public_ip              = "myPublicIP"
 $load_balancer          = "myLoadBalancer"
-$frontend_pool            = "myFrontEndPool"
+$frontend_pool          = "myFrontEndPool"
 $backend_pool           = "myBackEndPool"
 $health_probe           = "myHealthProbe"
 $load_balancer_rule     = "myHTTPRule"
@@ -105,7 +105,7 @@ Write-Host "_____________________________________________" -BackgroundColor Dark
 Write-Host "            Virtual machines creation." -BackgroundColor DarkGreen
 Write-Host "_____________________________________________" -BackgroundColor DarkGreen
 
-for ($i = 0; $i -lt 2; $i++) {
+for ($i = 0; $i -lt 3; $i++) {
     $NIC      = "webNIC"   + $i
     Write-Host "Creating the NIC ($NIC)." -BackgroundColor DarkGreen
     az network nic create `
@@ -145,7 +145,22 @@ for ($i = 0; $i -lt 2; $i++) {
         --generate-ssh-keys `
         --custom-data utilities\cloud-init.txt `
         --tags Project=az104Test
+
 }
+#JLopez: For testing purposes.
+Write-Host "Testing with an windows machine."
+az vm create `
+    --admin-username azureuser `
+    --admin-password "3000@UserAzure" `
+    --resource-group $rg `
+    --name "VM2" `
+    --nics "webNIC2" `
+    --location $l `
+    --image "MicrosoftWindowsServer:WindowsServer:2019-datacenter-gensecond:latest"`
+    --availability-set $aset `
+    --custom-data .\utilities\cloud-init-windows.txt `
+    --tags Project=az104Test
+
 Write-Host "_____________________________________________" -BackgroundColor DarkGreen
 Write-Host "     virtual machines setup completed!." -BackgroundColor DarkGreen
 Write-Host "_____________________________________________" -BackgroundColor DarkGreen
