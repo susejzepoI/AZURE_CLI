@@ -148,6 +148,20 @@ for ($i = 0; $i -lt 2; $i++) {
 
 }
 #JLopez: For testing purposes.
+az network nsg rule create `
+    --resource-group $rg `
+    --nsg-name $nsg_name `
+    --name "default-allow-rdp" `
+    --priority 1000 `
+    --source-port-range "*" `
+    --source-address-prefixes "*" `
+    --destination-address-prefixes "*" `
+    --destination-port-ranges "3389" `
+    --access "Allow" `
+    --protocol "Tcp" `
+    --direction "Inbound" `
+    --description "JLopez: Allow RDP traffic."
+
 Write-Host "Testing with an windows machine."
 az vm create `
     --admin-username azureuser `
@@ -158,8 +172,15 @@ az vm create `
     --location $l `
     --image "MicrosoftWindowsServer:WindowsServer:2019-datacenter-gensecond:latest"`
     --availability-set $aset `
-    --custom-data .\utilities\cloud-init-windows.txt `
     --tags Project=az104Test
+
+az vm extension set `
+    --publisher Microsoft.Compute `
+    --version 1.9 `
+    --name CustomScriptExtension `
+    --vm-name "VM2" `
+    --resource-group $rg `
+    --settings "{'fileUris':['https://raw.githubusercontent.com/susejzepoI/AZURE_CLI/Testing/Scripts/utilities/cloud-init-windows.ps1'],'commandToExecute':'powershell -ExecutionPolicy Unrestricted -File cloud-init-windows.ps1'}"
 
 Write-Host "_____________________________________________" -BackgroundColor DarkGreen
 Write-Host "     virtual machines setup completed!." -BackgroundColor DarkGreen
@@ -214,7 +235,7 @@ az network lb rule create `
     --probe-name $health_probe
 
 #JLopez: Updating the virtual machines NIC.
-for ($i = 0; $i -lt 2; $i++) {
+for ($i = 0; $i -lt 3; $i++) {
     $NIC = "webNIC" + $i
 
     Write-Host "Updating the configuration for the ($NIC) NIC." -BackgroundColor DarkGreen
