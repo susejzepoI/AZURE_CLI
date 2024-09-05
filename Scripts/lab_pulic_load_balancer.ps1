@@ -2,12 +2,12 @@
 #Author:            Jesus Lopez Mesia
 #Linkedin:          https://www.linkedin.com/in/susejzepol/
 #Created date:      August-28-2024
-#Modified date:     September-02-2024
+#Modified date:     September-05-2024
 #Lab:               https://learn.microsoft.com/en-us/training/modules/improve-app-scalability-resiliency-with-load-balancer/4-exercise-configure-public-load-balancer?pivots=bash
 
 [CmdletBinding()]
 param (
-    [string]$rg = "az10420240901",
+    [string]$rg = "az10420240905",
     [string]$l  = "West US",
     [string]$s  = "Suscripción de Plataformas de MSDN"
 )
@@ -105,7 +105,7 @@ Write-Host "_____________________________________________" -BackgroundColor Dark
 Write-Host "            Virtual machines creation." -BackgroundColor DarkGreen
 Write-Host "_____________________________________________" -BackgroundColor DarkGreen
 
-for ($i = 0; $i -lt 3; $i++) {
+for ($i = 0; $i -lt 4; $i++) {
     $NIC      = "webNIC"   + $i
     Write-Host "Creating the NIC ($NIC)." -BackgroundColor DarkGreen
     az network nic create `
@@ -128,59 +128,69 @@ az vm availability-set create `
 
 #JLopez-20240807: Creating each virtual machine
 Write-Host "Creating each virtual machine." -BackgroundColor DarkGreen
-for ($i = 0; $i -lt 2; $i++) {
+for ($i = 0; $i -lt 4; $i++) {
     
     $vm       = $vm_name   + $i
     $NIC      = "webNIC"   + $i
 
-    Write-Host "Creating the virtual machine ($vm)." -BackgroundColor DarkGreen
-    az vm create `
-        --admin-username azureuser `
-        --resource-group $rg `
-        --name $vm `
-        --nics $NIC `
-        --location $l `
-        --image Ubuntu2204 `
-        --availability-set $aset `
-        --generate-ssh-keys `
-        --custom-data utilities\cloud-init.txt `
-        --tags Project=az104Test
+    #JLopez-20240905: Adding a condition to verify if the $i value is odd or even.
+    if($i % 2 -eq 0 ){
+        Write-Host "Creating the virtual machine ($vm)." -BackgroundColor DarkGreen
+        az vm create `
+            --admin-username azureuser `
+            --resource-group $rg `
+            --name $vm `
+            --nics $NIC `
+            --location $l `
+            --image Ubuntu2204 `
+            --availability-set $aset `
+            --generate-ssh-keys `
+            --custom-data utilities\cloud-init.txt `
+            --tags Project=az104Test
+    }else{
+        #JLopez-20240905: Creating windows server machines.
+        Write-Host "Creating the virtual machine ($vm)."  -BackgroundColor DarkGreen
+        az vm create `
+            --admin-username azureuser `
+            --resource-group $rg `
+            --name $vm `
+            --nics $NIC `
+            --location $l `
+            --image "MicrosoftWindowsServer:WindowsServer:2019-datacenter-gensecond:latest"`
+            --availability-set $aset `
+            --generate-ssh-keys `
+            --tags Project=az104Test
+    
+        Write-Host "Adding configurations for the ($vm)."  -BackgroundColor DarkGreen
+        az vm extension set `
+            --publisher Microsoft.Compute `
+            --version 1.9 `
+            --name CustomScriptExtension `
+            --vm-name $vm `
+            --resource-group $rg `
+            --settings "{'fileUris':['https://raw.githubusercontent.com/susejzepoI/AZURE_CLI/Testing/Scripts/utilities/cloud-init-windows.ps1'],'commandToExecute':'powershell -ExecutionPolicy Unrestricted -File cloud-init-windows.ps1'}" `
+            --no-wait
+    }
+
 
 }
 #JLopez: For testing purposes.
-az network nsg rule create `
-    --resource-group $rg `
-    --nsg-name $nsg_name `
-    --name "default-allow-rdp" `
-    --priority 1000 `
-    --source-port-range "*" `
-    --source-address-prefixes "*" `
-    --destination-address-prefixes "*" `
-    --destination-port-ranges "3389" `
-    --access "Allow" `
-    --protocol "Tcp" `
-    --direction "Inbound" `
-    --description "JLopez: Allow RDP traffic."
+# az network nsg rule create `
+#     --resource-group $rg `
+#     --nsg-name $nsg_name `
+#     --name "default-allow-rdp" `
+#     --priority 1000 `
+#     --source-port-range "*" `
+#     --source-address-prefixes "*" `
+#     --destination-address-prefixes "*" `
+#     --destination-port-ranges "3389" `
+#     --access "Allow" `
+#     --protocol "Tcp" `
+#     --direction "Inbound" `
+#     --description "JLopez: Allow RDP traffic."
 
-Write-Host "Testing with an windows machine."
-az vm create `
-    --admin-username azureuser `
-    --admin-password "3000@UserAzure" `
-    --resource-group $rg `
-    --name "VM2" `
-    --nics "webNIC2" `
-    --location $l `
-    --image "MicrosoftWindowsServer:WindowsServer:2019-datacenter-gensecond:latest"`
-    --availability-set $aset `
-    --tags Project=az104Test
+# Write-Host "Testing with an windows machine."
 
-az vm extension set `
-    --publisher Microsoft.Compute `
-    --version 1.9 `
-    --name CustomScriptExtension `
-    --vm-name "VM2" `
-    --resource-group $rg `
-    --settings "{'fileUris':['https://raw.githubusercontent.com/susejzepoI/AZURE_CLI/Testing/Scripts/utilities/cloud-init-windows.ps1'],'commandToExecute':'powershell -ExecutionPolicy Unrestricted -File cloud-init-windows.ps1'}"
 
 Write-Host "_____________________________________________" -BackgroundColor DarkGreen
 Write-Host "     virtual machines setup completed!." -BackgroundColor DarkGreen
@@ -235,7 +245,7 @@ az network lb rule create `
     --probe-name $health_probe
 
 #JLopez: Updating the virtual machines NIC.
-for ($i = 0; $i -lt 3; $i++) {
+for ($i = 0; $i -lt 4; $i++) {
     $NIC = "webNIC" + $i
 
     Write-Host "Updating the configuration for the ($NIC) NIC." -BackgroundColor DarkGreen
