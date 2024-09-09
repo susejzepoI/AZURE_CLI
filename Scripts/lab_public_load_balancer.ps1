@@ -2,15 +2,18 @@
 #Author:            Jesus Lopez Mesia
 #Linkedin:          https://www.linkedin.com/in/susejzepol/
 #Created date:      August-28-2024
-#Modified date:     September-05-2024
+#Modified date:     September-09-2024
 #Lab:               https://learn.microsoft.com/en-us/training/modules/improve-app-scalability-resiliency-with-load-balancer/4-exercise-configure-public-load-balancer?pivots=bash
 
 [CmdletBinding()]
 param (
-    [string]$rg = "az10420240905",
+    [string]$rg = "az10420240909",
     [string]$l  = "West US",
     [string]$s  = "Suscripción de Plataformas de MSDN"
 )
+
+#JLopez-20240909: Import the module "print-message-custom-v1.psm1".
+Import-Module ".\Scripts\utilities\print-message-custom-v1.psm1"
 
 #JLopez: Internal Parameters
 $vnet_name              = "bePortalVnet"
@@ -25,9 +28,7 @@ $backend_pool           = "myBackEndPool"
 $health_probe           = "myHealthProbe"
 $load_balancer_rule     = "myHTTPRule"
 
-Write-Host "_____________________________________________" -BackgroundColor DarkGreen
-Write-Host "      Validation of the resource group." -BackgroundColor DarkGreen
-Write-Host "_____________________________________________" -BackgroundColor DarkGreen
+printMyMessage -message "Validation of the resource group."
 
 #JLopez: Check if the current resource group exists
 $check_rg = -not [bool]::Parse($(az group exists --name $rg))
@@ -44,17 +45,9 @@ if ($check_rg) {
         --tags Project=az104Test
 }
 
-Write-Host "_____________________________________________" -BackgroundColor DarkGreen
-Write-Host "      Resource group validation done!." -BackgroundColor DarkGreen
-Write-Host "_____________________________________________" -BackgroundColor DarkGreen
+printMyMessage -message "Resource group validation done!."
 
-for ($i = 0; $i -lt 6; $i++) {
-    Write-Host ""
-}
-
-Write-Host "_____________________________________________" -BackgroundColor DarkGreen
-Write-Host "       Virtual network creation." -BackgroundColor DarkGreen
-Write-Host "_____________________________________________" -BackgroundColor DarkGreen
+printMyMessage -message "Virtual network creation." -c 0
 
 az network vnet create `
     --resource-group $rg `
@@ -62,17 +55,9 @@ az network vnet create `
     --subnet-name $subnet_name `
     --tags Project=az104Test
 
-Write-Host "_____________________________________________" -BackgroundColor DarkGreen
-Write-Host "          Virtual network Deployed." -BackgroundColor DarkGreen
-Write-Host "_____________________________________________" -BackgroundColor DarkGreen
+printMyMessage -message "Virtual network Deployed."
 
-for ($i = 0; $i -lt 6; $i++) {
-    Write-Host ""
-}
-
-Write-Host "_____________________________________________" -BackgroundColor DarkGreen
-Write-Host "       Network Security group creation." -BackgroundColor DarkGreen
-Write-Host "_____________________________________________" -BackgroundColor DarkGreen
+printMyMessage -message "Network Security group creation." -c 0
 
 az network nsg create `
     --resource-group $rg `
@@ -93,17 +78,9 @@ az network nsg rule create `
     --direction "Inbound" `
     --description "Allow inbound on port 80"
 
-Write-Host "_____________________________________________" -BackgroundColor DarkGreen
-Write-Host "       Network Security group deployed." -BackgroundColor DarkGreen
-Write-Host "_____________________________________________" -BackgroundColor DarkGreen
+printMyMessage -message "Network Security group deployed."
 
-for ($i = 0; $i -lt 6; $i++) {
-    Write-Host ""
-}
-
-Write-Host "_____________________________________________" -BackgroundColor DarkGreen
-Write-Host "            Virtual machines creation." -BackgroundColor DarkGreen
-Write-Host "_____________________________________________" -BackgroundColor DarkGreen
+printMyMessage -message "Virtual machines creation." -c 0
 
 for ($i = 0; $i -lt 4; $i++) {
     $NIC      = "webNIC"   + $i
@@ -174,35 +151,10 @@ for ($i = 0; $i -lt 4; $i++) {
 
 
 }
-#JLopez: For testing purposes.
-# az network nsg rule create `
-#     --resource-group $rg `
-#     --nsg-name $nsg_name `
-#     --name "default-allow-rdp" `
-#     --priority 1000 `
-#     --source-port-range "*" `
-#     --source-address-prefixes "*" `
-#     --destination-address-prefixes "*" `
-#     --destination-port-ranges "3389" `
-#     --access "Allow" `
-#     --protocol "Tcp" `
-#     --direction "Inbound" `
-#     --description "JLopez: Allow RDP traffic."
 
-# Write-Host "Testing with an windows machine."
+printMyMessage -message "virtual machines setup completed!."
 
-
-Write-Host "_____________________________________________" -BackgroundColor DarkGreen
-Write-Host "     virtual machines setup completed!." -BackgroundColor DarkGreen
-Write-Host "_____________________________________________" -BackgroundColor DarkGreen
-
-for ($i = 0; $i -lt 6; $i++) {
-    Write-Host ""
-}
-
-Write-Host "_____________________________________________" -BackgroundColor DarkGreen
-Write-Host "          Load balancer creation." -BackgroundColor DarkGreen
-Write-Host "_____________________________________________" -BackgroundColor DarkGreen
+printMyMessage -message "Load balancer creation." -c 0
 
 #JLopez: Creating the public IP
 Write-Host "Creating the public IP ($public_ip)." -BackgroundColor DarkGreen
@@ -257,9 +209,7 @@ for ($i = 0; $i -lt 4; $i++) {
         --lb-address-pools $backend_pool
 }
 
-Write-Host "_____________________________________________" -BackgroundColor DarkGreen
-Write-Host "          Load balancer deployed!." -BackgroundColor DarkGreen
-Write-Host "_____________________________________________" -BackgroundColor DarkGreen
+printMyMessage -message "Load balancer deployed!." -c 0
 
 $message = "http://" + $(
                             az network public-ip show `

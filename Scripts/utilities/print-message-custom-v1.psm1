@@ -7,6 +7,7 @@
 function printMyMessage {
     param (
         [string]$message,
+        [int] $c = 6,
         [string]$color ="DarkGreen"
     )
     
@@ -14,7 +15,7 @@ function printMyMessage {
     Write-Host "$message" -BackgroundColor DarkGreen
     Write-Host "______________________________________________________" -BackgroundColor $color
     
-    for ($i = 0; $i -lt 6; $i++) {
+    for ($i = 0; $i -lt $c; $i++) {
         Write-Host ""
     }
 }
