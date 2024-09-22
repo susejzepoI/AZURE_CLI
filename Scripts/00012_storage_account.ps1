@@ -1,7 +1,7 @@
 #Author:            Jesus Lopez Mesia
 #Linkedin:          https://www.linkedin.com/in/susejzepol/
 #Created date:      September-17-2024
-#Modified date:     September-21-2024
+#Modified date:     September-22-2024
 #Lab:               https://learn.microsoft.com/en-us/training/modules/configure-storage-security/8-simulation-storage
 
 [CmdletBinding()]
@@ -33,7 +33,7 @@ checkMyResourceGroup -rg $rg2 -s $s -l $l -t Project=$lab
 
 printMyMessage -message "Resource group validation done!."
 
-Write-Host "Setting the default resource group to $rg2." -BackgroundColor DarkGreen
+Write-Host "Setting the default resource group to $rg1." -BackgroundColor DarkGreen
 az configure --defaults group=$rg1
 
 printMyMessage -message "Starting the virtual network creation." -c 0
@@ -112,6 +112,7 @@ az storage account create `
     --access-tier "Cool" `
     --allow-blob-public-access false `
     --sku "Standard_LRS" `
+    --mim-tls-version "TLS1_2" `
     --tags Project=$lab
 
 az storage container create `
