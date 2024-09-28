@@ -1,7 +1,7 @@
 #Author:            Jesus Lopez Mesia
 #Linkedin:          https://www.linkedin.com/in/susejzepol/
 #Created date:      September-17-2024
-#Modified date:     September-22-2024
+#Modified date:     September-28-2024
 #Lab:               https://learn.microsoft.com/en-us/training/modules/configure-storage-security/8-simulation-storage
 
 [CmdletBinding()]
@@ -13,8 +13,11 @@ param (
 #JLopez-20240909: Import the module "print-message-custom-v1.psm1".
 Import-Module ".\Scripts\utilities\print-message-custom-v1.psm1"
 
+Write-Host "$(get-date)" -BackgroundColor DarkGreen
+
 #JLopez-20240918: Internal variables
-$lab                = "lab00012"
+$day                = $(get-date -format "yyyyMMdd")
+$lab                = "lab00012" + $day
 $rg1                = $lab + "az10401"
 $rg2                = $lab + "az10402"
 $vnet               = $lab + "Vnet"
@@ -115,18 +118,40 @@ az storage account create `
     --min-tls-version "TLS1_2" `
     --tags Project=$lab
 
+Write-Host "Adding the account to the Storage Blob Data Owner role." -BackgroundColor DarkGreen
+
+$tenantID = $(az account show --query "tenantId" --output tsv)
+$StorageID = $(az storage account show --name $storage_account --query "id" --output tsv)
+
+az role assignment create `
+    --assignee $tenantID `
+    --role "Storage Blob Data Owner" `
+    --scope $StorageID
+
+Write-Host "The account was added to the Storage Blob Data Owner role!." -BackgroundColor DarkGreen
+
 az storage container create `
     --name $storage_container `
-    --account-name $storage_account 
-
-Write-Host "Copying a blob into container $storage_container." -BackgroundColor DarkGreen
-az storage blob copy start `
     --account-name $storage_account `
-    --destination-container $storage_container `
-    --source-uri "https://github.com/susejzepoI/AZURE_CLI/blob/main/Scripts/files/IMG_0652.JPEG" `
-    --destination-blob "Images\IMG_0652.JPEG" `
+    --auth-mode login
+
+Write-Host "Uploading a blob into container $storage_container." -BackgroundColor DarkGreen
+#JLopez-20240928: Disabled because the image hasn't been loaded correctly into the container.
+# az storage blob copy start `
+#     --account-name $storage_account `
+#     --destination-container $storage_container `
+#     --source-uri "https://github.com/susejzepoI/AZURE_CLI/blob/main/Scripts/files/IMG_0652.JPEG" `
+#     --destination-blob "Images\IMG_0652.JPEG" `
+#     --tier "Hot" `
+#     --tags Project=$lab
+az storage blob upload `
+    --account-name $storage_account `
+    --container-name $storage_container `
+    --file ".\Scripts\files\IMG_0652.JPEG" `
+    --name "Images\IMG_0652.JPEG" `
     --tier "Hot" `
-    --tags Project=$lab
+    --auth-mode login `
+    --tags Project=$lab 
 
 printMyMessage -message "Azure storage account deployed!."
 
