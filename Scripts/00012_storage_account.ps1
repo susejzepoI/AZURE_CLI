@@ -96,7 +96,7 @@ if($LASTEXITCODE -ne 0){
     --no-wait `
     --tags Project=$lab
 }else{
-    Write-Host "The virtual machine ($vm) does exists. No further action is needed." -BackgroundColor DarkGreen
+    Write-Host "The virtual machine ($vm) exists. No further action is needed." -BackgroundColor DarkGreen
 }
 
 
@@ -112,12 +112,21 @@ az storage account create `
     --access-tier "Cool" `
     --allow-blob-public-access false `
     --sku "Standard_LRS" `
-    --mim-tls-version "TLS1_2" `
+    --min-tls-version "TLS1_2" `
     --tags Project=$lab
 
 az storage container create `
     --name $storage_container `
     --account-name $storage_account 
+
+Write-Host "Copying a blob into container $storage_container." -BackgroundColor DarkGreen
+az storage blob copy start `
+    --account-name $storage_account `
+    --destination-container $storage_container `
+    --source-uri "https://github.com/susejzepoI/AZURE_CLI/blob/main/Scripts/files/IMG_0652.JPEG" `
+    --destination-blob "Images\IMG_0652.JPEG" `
+    --tier "Hot" `
+    --tags Project=$lab
 
 printMyMessage -message "Azure storage account deployed!."
 
