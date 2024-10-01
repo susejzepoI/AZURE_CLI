@@ -1,7 +1,7 @@
 #Author:            Jesus Lopez Mesia
 #Linkedin:          https://www.linkedin.com/in/susejzepol/
 #Created date:      September-17-2024
-#Modified date:     September-28-2024
+#Modified date:     September-30-2024
 #Lab:               https://learn.microsoft.com/en-us/training/modules/configure-storage-security/8-simulation-storage
 
 [CmdletBinding()]
@@ -120,11 +120,12 @@ az storage account create `
 
 Write-Host "Adding the account to the Storage Blob Data Owner role." -BackgroundColor DarkGreen
 
-$tenantID = $(az account show --query "tenantId" --output tsv)
+$PrincipalName = $(az ad user list --query "[].{UserPrincipalName:userPrincipalName}" --output tsv)
+$Principalid = $(az ad user show --id $PrincipalName --query id --output tsv)
 $StorageID = $(az storage account show --name $storage_account --query "id" --output tsv)
 
 az role assignment create `
-    --assignee $tenantID `
+    --assignee $Principalid `
     --role "Storage Blob Data Owner" `
     --scope $StorageID
 
