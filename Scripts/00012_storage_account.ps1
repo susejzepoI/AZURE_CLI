@@ -1,7 +1,7 @@
 #Author:            Jesus Lopez Mesia
 #Linkedin:          https://www.linkedin.com/in/susejzepol/
 #Created date:      September-17-2024
-#Modified date:     September-30-2024
+#Modified date:     October-02-2024
 #Lab:               https://learn.microsoft.com/en-us/training/modules/configure-storage-security/8-simulation-storage
 
 [CmdletBinding()]
@@ -28,7 +28,7 @@ $public_ip          = $lab + "PubIP"
 $nic                = $vm  + "NIC" 
 $storage_account    = $lab + "storage"
 $storage_container  = $lab + "container"
-
+$blob_name          = "Images\IMG_0652.JPEG"
 printMyMessage -message "Starting with the resource group validation." -c 0
 
 checkMyResourceGroup -rg $rg1 -s $s -l $l -t Project=$lab
@@ -149,10 +149,28 @@ az storage blob upload `
     --account-name $storage_account `
     --container-name $storage_container `
     --file ".\Scripts\files\IMG_0652.JPEG" `
-    --name "Images\IMG_0652.JPEG" `
+    --name $blob_name `
     --tier "Hot" `
     --auth-mode login `
     --tags Project=$lab 
+
+$end = (Get-Date).AddMinutes(30).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:00Z")
+Write-Host "Generating the SAS Token for the blob ($blob_name) until ($end)." -BackgroundColor DarkGreen
+$SASToken = (
+                az storage blob generate-sas `
+                --account-name $storage_account `
+                --container-name $storage_container `
+                --name $blob_name `
+                --permissions r `
+                --expiry $end `
+                --https-only `
+                --as-user `
+                --auth-mode login `
+                --output tsv 
+            )
+$BlobURL = "https://$storage_account.blob.core.windows.net/$storage_container/$blob_name?$SASToken"
+
+Write-Host "Blob URL: $BlobURL" -BackgroundColor DarkGreen
 
 printMyMessage -message "Azure storage account deployed!."
 
