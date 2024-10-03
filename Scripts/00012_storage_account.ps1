@@ -1,7 +1,7 @@
 #Author:            Jesus Lopez Mesia
 #Linkedin:          https://www.linkedin.com/in/susejzepol/
 #Created date:      September-17-2024
-#Modified date:     October-02-2024
+#Modified date:     October-03-2024
 #Lab:               https://learn.microsoft.com/en-us/training/modules/configure-storage-security/8-simulation-storage
 
 [CmdletBinding()]
@@ -23,12 +23,12 @@ $rg2                = $lab + "az10402"
 $vnet               = $lab + "Vnet"
 $subnet             = $lab + "Subnet"
 $nsg                = $lab + "NSG"
-$vm                 = $lab + "VM01"
+$vm                 = "lab00012VM01"
 $public_ip          = $lab + "PubIP"
 $nic                = $vm  + "NIC" 
 $storage_account    = $lab + "storage"
 $storage_container  = $lab + "container"
-$blob_name          = "Images\IMG_0652.JPEG"
+$blob_name          = "Images/my_dog.JPEG"
 printMyMessage -message "Starting with the resource group validation." -c 0
 
 checkMyResourceGroup -rg $rg1 -s $s -l $l -t Project=$lab
@@ -137,22 +137,22 @@ az storage container create `
     --auth-mode login
 
 Write-Host "Uploading a blob into container $storage_container." -BackgroundColor DarkGreen
-#JLopez-20240928: Disabled because the image hasn't been loaded correctly into the container.
-# az storage blob copy start `
-#     --account-name $storage_account `
-#     --destination-container $storage_container `
-#     --source-uri "https://github.com/susejzepoI/AZURE_CLI/blob/main/Scripts/files/IMG_0652.JPEG" `
-#     --destination-blob "Images\IMG_0652.JPEG" `
-#     --tier "Hot" `
-#     --tags Project=$lab
-az storage blob upload `
+az storage blob copy start `
     --account-name $storage_account `
-    --container-name $storage_container `
-    --file ".\Scripts\files\IMG_0652.JPEG" `
-    --name $blob_name `
-    --tier "Hot" `
+    --destination-container $storage_container `
+    --source-uri "https://raw.githubusercontent.com/susejzepoI/AZURE_CLI/main/Scripts/files/IMG_0652.JPEG" `
+    --destination-blob $blob_name `
     --auth-mode login `
-    --tags Project=$lab 
+    --tier "Hot" `
+    --tags Project=$lab
+# az storage blob upload `
+#     --account-name $storage_account `
+#     --container-name $storage_container `
+#     --file ".\Scripts\files\IMG_0652.JPEG" `
+#     --name $blob_name `
+#     --tier "Hot" `
+#     --auth-mode login `
+#     --tags Project=$lab 
 
 $end = (Get-Date).AddMinutes(30).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:00Z")
 Write-Host "Generating the SAS Token for the blob ($blob_name) until ($end)." -BackgroundColor DarkGreen
@@ -168,7 +168,7 @@ $SASToken = (
                 --auth-mode login `
                 --output tsv 
             )
-$BlobURL = "https://$storage_account.blob.core.windows.net/$storage_container/$blob_name?$SASToken"
+$BlobURL = "https://$storage_account.blob.core.windows.net/$storage_container/$blob_name"+"?"+"$SASToken"
 
 Write-Host "Blob URL: $BlobURL" -BackgroundColor DarkGreen
 
