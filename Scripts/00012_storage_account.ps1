@@ -204,5 +204,15 @@ az storage share create `
     --metadata Project=$lab `
     --quota 1
 
+Write-Host "Getting the storage account key." -BackgroundColor DarkGreen
+
+az vm extension set `
+    --resource-group $rg1 `
+    --vm-name $vm `
+    --name CustomScriptExtension `
+    --publisher Microsoft.Compute `
+    --version 1.9 `
+    --settings '{"commandToExecute":"sudo mount -t cifs //mystorageaccount.file.core.windows.net/mynewfileshare /mnt/mynewfileshare -o vers=3.0,username=mystorageaccount,password=<YourStorageAccountKey>,dir_mode=0777,file_mode=0777,serverino"}'
+
 printMyMessage -message "The file share ($file_share) was deployed and connected in the ($vm) machine." -c 0
 printMyMessage -message "All set!." -c 0
