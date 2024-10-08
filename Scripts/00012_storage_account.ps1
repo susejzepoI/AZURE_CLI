@@ -198,9 +198,13 @@ printMyMessage -message "Azure storage account deployed!."
 
 printMyMessage -message "Creating the File share ($file_share) in the account ($storage_account)." -c 0
 
+Write-Host "Retriving the key for the storage ($storage_account)." -BackgroundColor DarkGreen
+$StorageKey = $(az storage account keys list --account-name $storage_account --query "[0].value" --output tsv)
+
 az storage share create `
     --account-name $storage_account `
     --name $file_share `
+    --account-key $StorageKey `
     --metadata Project=$lab `
     --quota 1
 
@@ -212,7 +216,7 @@ az vm extension set `
     --name CustomScriptExtension `
     --publisher Microsoft.Compute `
     --version 1.9 `
-    --settings '{"commandToExecute":"sudo mount -t cifs //mystorageaccount.file.core.windows.net/mynewfileshare /mnt/mynewfileshare -o vers=3.0,username=mystorageaccount,password=<YourStorageAccountKey>,dir_mode=0777,file_mode=0777,serverino"}'
+    --settings '{\"commandToExecute\":\"net use Z: \\$storage_account.file.core.windows.net\\$file_share /u:$storage_account $StorageKey\"}'
 
 printMyMessage -message "The file share ($file_share) was deployed and connected in the ($vm) machine." -c 0
 printMyMessage -message "All set!." -c 0
