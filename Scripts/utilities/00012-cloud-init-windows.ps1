@@ -7,7 +7,7 @@ param (
     [Parameter(Mandatory=$true)]
     [string]$key,
     #$JLopez-20240810: This parameter
-    [string]$drive
+    [string]$drive = "Z"
 )
 
 $connectTestResult = Test-NetConnection -ComputerName $account.file.core.windows.net -Port 445

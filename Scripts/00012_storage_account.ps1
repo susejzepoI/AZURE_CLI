@@ -17,7 +17,7 @@ Write-Host "$(get-date)" -BackgroundColor DarkGreen
 
 #JLopez-20240918: Internal variables
 $day                = $(get-date -format "yyyyMMdd")
-$lab                = "lab00012" + $day
+$lab                = "lab000121" + $day
 $rg1                = $lab + "az10401"
 $rg2                = $lab + "az10402"
 $vnet               = $lab + "Vnet"
@@ -73,6 +73,19 @@ if($LASTEXITCODE -ne 0){
         --protocol "Tcp" `
         --direction "Inbound" `
         --description "Allow rdp connections on 3389 port (for testing only)."
+
+        az network nsg rule create `
+        --nsg-name $nsg `
+        --name "AllowVnet80InBound"`
+        --priority 120 `
+        --source-address-prefixes "*" `
+        --source-port-ranges "*" `
+        --destination-address-prefixes "*" `
+        --destination-port-ranges 80 `
+        --access "Allow" `
+        --protocol "Tcp" `
+        --direction "Inbound" `
+        --description "Allow inbound on 80 port."
 
     printMyMessage -message "Network security group deployed!."
 
@@ -216,7 +229,9 @@ az vm extension set `
     --name CustomScriptExtension `
     --publisher Microsoft.Compute `
     --version 1.9 `
-    --settings '{\"commandToExecute\":\"net use Z: \\$storage_account.file.core.windows.net\\$file_share /u:$storage_account $StorageKey\"}'
+    --settings "{'fileUris':['https://raw.githubusercontent.com/susejzepoI/AZURE_CLI/Testing/Scripts/utilities/00012-cloud-init-windows.ps1'],'commandToExecute':'powershell -ExecutionPolicy Unrestricted -File 00012-cloud-init-windows.ps1 -account $storage_account -shared $file_share -key $StorageKey -drive Z'}" `
+    # --settings '{"fileUris":".\\utilities\\00012-cloud-init-windows.ps1","commandToExecute": "powershell -ExecutionPolicy Unrestricted -File 00012-cloud-init-windows.ps1 -account $storage_account -shared $file_share -key $StorageKey"}'
+    # --settings "{'fileUris':['.\utilities\00012-cloud-init-windows.ps1'],'commandToExecute':'powershell -ExecutionPolicy Unrestricted -File 00012-cloud-init-windows.ps1 -account $storage_account -shared $file_share -key $StorageKey'}" `
 
 printMyMessage -message "The file share ($file_share) was deployed and connected in the ($vm) machine." -c 0
 printMyMessage -message "All set!." -c 0
