@@ -1,7 +1,7 @@
 #Author:            Jesus Lopez Mesia
 #Linkedin:          https://www.linkedin.com/in/susejzepol/
 #Created date:      September-17-2024
-#Modified date:     October-09-2024
+#Modified date:     October-10-2024
 #Lab:               https://learn.microsoft.com/en-us/training/modules/configure-storage-security/8-simulation-storage
 
 [CmdletBinding()]
@@ -10,8 +10,14 @@ param (
     [string]$s = "Suscripción de Plataformas de MSDN"
 )
 
-#JLopez-20240909: Import the module "print-message-custom-v1.psm1".
-Import-Module ".\Scripts\utilities\print-message-custom-v1.psm1"
+#JLopez-20241010: Import the module "print-message-custom-v1.psm1".
+$pwd.path
+if($pwd.path -like "*Scripts"){
+    $root = "."
+}else {
+    $root = ".\Scripts"
+}
+Import-Module  "$root\utilities\print-message-custom-v1.psm1"
 
 Write-Host "$(get-date)" -BackgroundColor DarkGreen
 
@@ -233,7 +239,7 @@ $VMPowerState = $(
                 )
 
 while ($VMPowerState -ne "VM running"){
-    Write-Host "Waiting until the virtual machine start running, vm current state: $VMPowerState."
+    Write-Host "Waiting until the virtual machine start running, vm current state: $VMPowerState." -BackgroundColor DarkGreen
 }
 
 az vm extension set `
