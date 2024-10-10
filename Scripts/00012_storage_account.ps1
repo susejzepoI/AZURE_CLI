@@ -1,7 +1,7 @@
 #Author:            Jesus Lopez Mesia
 #Linkedin:          https://www.linkedin.com/in/susejzepol/
 #Created date:      September-17-2024
-#Modified date:     October-08-2024
+#Modified date:     October-09-2024
 #Lab:               https://learn.microsoft.com/en-us/training/modules/configure-storage-security/8-simulation-storage
 
 [CmdletBinding()]
@@ -17,7 +17,7 @@ Write-Host "$(get-date)" -BackgroundColor DarkGreen
 
 #JLopez-20240918: Internal variables
 $day                = $(get-date -format "yyyyMMdd")
-$lab                = "lab000121" + $day
+$lab                = "lab00012" + $day
 $rg1                = $lab + "az10401"
 $rg2                = $lab + "az10402"
 $vnet               = $lab + "Vnet"
@@ -221,7 +221,20 @@ az storage share create `
     --metadata Project=$lab `
     --quota 1
 
-Write-Host "Getting the storage account key." -BackgroundColor DarkGreen
+Write-Host "Connecting the virtual machine ($vm) with the share file ($file_share)." -BackgroundColor DarkGreen
+
+$VMPowerState = $(
+                    az vm show `
+                        --resource-group $rg1 `
+                        --name $vm `
+                        --show-details `
+                        --query 'powerState' `
+                        --output tsv
+                )
+
+while ($VMPowerState -ne "VM running"){
+    Write-Host "Waiting until the virtual machine start running, vm current state: $VMPowerState."
+}
 
 az vm extension set `
     --resource-group $rg1 `
@@ -230,8 +243,6 @@ az vm extension set `
     --publisher Microsoft.Compute `
     --version 1.9 `
     --settings "{'fileUris':['https://raw.githubusercontent.com/susejzepoI/AZURE_CLI/Testing/Scripts/utilities/00012-cloud-init-windows.ps1'],'commandToExecute':'powershell -ExecutionPolicy Unrestricted -File 00012-cloud-init-windows.ps1 -account $storage_account -shared $file_share -key $StorageKey -drive Z'}" `
-    # --settings '{"fileUris":".\\utilities\\00012-cloud-init-windows.ps1","commandToExecute": "powershell -ExecutionPolicy Unrestricted -File 00012-cloud-init-windows.ps1 -account $storage_account -shared $file_share -key $StorageKey"}'
-    # --settings "{'fileUris':['.\utilities\00012-cloud-init-windows.ps1'],'commandToExecute':'powershell -ExecutionPolicy Unrestricted -File 00012-cloud-init-windows.ps1 -account $storage_account -shared $file_share -key $StorageKey'}" `
 
 printMyMessage -message "The file share ($file_share) was deployed and connected in the ($vm) machine." -c 0
 printMyMessage -message "All set!." -c 0
