@@ -1,7 +1,7 @@
 #Author:            Jesus Lopez Mesia
 #Linkedin:          https://www.linkedin.com/in/susejzepol/
 #Created date:      September-17-2024
-#Modified date:     October-10-2024
+#Modified date:     October-12-2024
 #Lab:               https://learn.microsoft.com/en-us/training/modules/configure-storage-security/8-simulation-storage
 
 [CmdletBinding()]
@@ -11,7 +11,6 @@ param (
 )
 
 #JLopez-20241010: Import the module "print-message-custom-v1.psm1".
-$pwd.path
 if($pwd.path -like "*Scripts"){
     $root = "."
 }else {
@@ -57,6 +56,7 @@ if($LASTEXITCODE -ne 0){
     az network vnet create `
         --name $vnet `
         --subnet-name $subnet `
+        --location $l `
         --tags Project=$lab
 
     printMyMessage -message "Virtual network Deployed."
@@ -100,6 +100,7 @@ if($LASTEXITCODE -ne 0){
     Write-Host "Creating the public IP for the NIC ($nic)." -BackgroundColor DarkGreen
     az network public-ip create `
         --allocation-method "Static" `
+        --location $l `
         --name $public_ip
 
     Write-Host "Creating the NIC ($nic) for the virtual machine ($vm)."
@@ -115,6 +116,7 @@ if($LASTEXITCODE -ne 0){
     az vm create `
     --name $vm `
     --admin-username azureuser `
+    --admin-password "3000@UserAzure" `
     --nics $nic `
     --image "MicrosoftWindowsServer:WindowsServer:2019-datacenter-gensecond:latest" `
     --no-wait `
@@ -229,26 +231,31 @@ az storage share create `
 
 Write-Host "Connecting the virtual machine ($vm) with the share file ($file_share)." -BackgroundColor DarkGreen
 
-$VMPowerState = $(
-                    az vm show `
-                        --resource-group $rg1 `
-                        --name $vm `
-                        --show-details `
-                        --query 'powerState' `
-                        --output tsv
-                )
+# $VMPowerState = $(
+#                     az vm show `
+#                         --resource-group $rg1 `
+#                         --name $vm `
+#                         --show-details `
+#                         --query 'powerState' `
+#                         --output tsv
+#                 )
 
-while ($VMPowerState -ne "VM running"){
-    Write-Host "Waiting until the virtual machine start running, vm current state: $VMPowerState." -BackgroundColor DarkGreen
-}
+#JLopez-20241012: This command does not work as expected.
+#                 It seems that the user running the azure extension does not have the privileges to
+#                 add a new drive in the virtual machine. If you run the script manully it works. Because,
+#                 you're logged with your account.
 
-az vm extension set `
-    --resource-group $rg1 `
-    --vm-name $vm `
-    --name CustomScriptExtension `
-    --publisher Microsoft.Compute `
-    --version 1.9 `
-    --settings "{'fileUris':['https://raw.githubusercontent.com/susejzepoI/AZURE_CLI/Testing/Scripts/utilities/00012-cloud-init-windows.ps1'],'commandToExecute':'powershell -ExecutionPolicy Unrestricted -File 00012-cloud-init-windows.ps1 -account $storage_account -shared $file_share -key $StorageKey -drive Z'}" `
+# while ($VMPowerState -ne "VM running"){
+#     Write-Host "Waiting until the virtual machine start running, vm current state: $VMPowerState." -BackgroundColor DarkGreen
+# }
+
+# az vm extension set `
+#     --resource-group $rg1 `
+#     --vm-name $vm `
+#     --name CustomScriptExtension `
+#     --publisher Microsoft.Compute `
+#     --version 1.10 `
+#     --settings "{'fileUris':['https://raw.githubusercontent.com/susejzepoI/AZURE_CLI/Testing/Scripts/utilities/00012-cloud-init-windows.ps1'],'commandToExecute':'powershell -ExecutionPolicy RemoteSigned -File 00012-cloud-init-windows.ps1 -account $storage_account -shared $file_share -key $StorageKey -drive Z:'}" `
 
 printMyMessage -message "The file share ($file_share) was deployed and connected in the ($vm) machine." -c 0
 printMyMessage -message "All set!." -c 0
