@@ -1,34 +1,37 @@
 #Author:            Jesus Lopez Mesia
 #Linkedin:          https://www.linkedin.com/in/susejzepol/
 #Created date:      October-23-2024
-#Modified date:     October-23-2024
+#Modified date:     October-24-2024
 #Lab:               https://learn.microsoft.com/en-us/training/modules/incident-response-with-alerting-on-azure/8-exercise-activity-log-alerts
 
 [CmdletBinding()]
 param (
     [string]$l = "West US",
-    [string]$s = "Suscripción de Plataformas de MSDN"
+    [string]$s = "Suscripción de Plataformas de MSDN",
+    [Parameter(Mandatory= $true, HelpMessage="Email to be used in the action group.")]
+    [string]$e
 )
 
 #JLopez: Import the module "print-message-custom-v1.psm1".
 if($pwd.path -like "*Scripts"){
     $root = "."
 }else {
-    $root = ".`Scripts"
+    $root = ".\Scripts"
 }
-Import-Module  "$root`utilities`print-message-custom-v1.psm1"
+Import-Module  "$root\utilities\print-message-custom-v1.psm1"
 
 Write-Host "$(get-date)" -BackgroundColor DarkGreen
 
 #JLopez: Internal variables
 $day                = $(get-date -format "yyyyMMdd")
-$lab                = "lab00013" + $day
-$rg1                = $lab + "az10401"
+$lab                = "lab000131" + $day
+$rg1                = $lab + "az10420241024"
 $vnet               = $lab + "Vnet"
 $subnet             = $lab + "Subnet"
 $nsg                = $lab + "NSG"
-$vm                 = "lab00013VM0"
-$nic                = $lab + "NICaz10401"
+$vm                 = "lab00013VM"
+$nic                = $lab + "NIC1az104"
+$action_group       = $lab + "ag"
 
 printMyMessage -message "Starting with the resource group validation." -c 0
 checkMyResourceGroup -rg $rg1 -s $s -l $l -t Project=$lab
@@ -74,13 +77,13 @@ if($LASTEXITCODE -ne 0){
 
     printMyMessage -message "Network security group deployed!."
 
-    printMyMessage -message "Starting the virtual machine ($vm) creation." -c 0
+    printMyMessage -message "Starting the virtual machines creation." -c 0
 
-    for ($i = 0; $i -lt 2; $i++) {
+    for ($i = 1; $i -lt 3; $i++) {
 
-        $public_ip  = "$vm_public_$i"
-        $vm         = $vm + $i
-        $nic        = $nic + $i
+        $public_ip  = "publicIP" + $i
+        $pvm         = $vm + $i
+        $pnic        = $nic + $i
 
         Write-Host "Creating the public IP for the NIC ($nic)." -BackgroundColor DarkGreen
         az network public-ip create `
@@ -88,29 +91,28 @@ if($LASTEXITCODE -ne 0){
             --location $l `
             --name $public_ip
     
-        Write-Host "Creating the NIC ($nic) for the virtual machine ($vm)."
+        Write-Host "Creating the NIC ($pnic) for the virtual machine ($pvm)."
         az network nic create `
-            --name $nic `
+            --name  $pnic `
             --vnet-name $vnet `
             --subnet $subnet `
             --network-security-group $nsg `
             --public-ip-address $public_ip `
             --location $l
     
-        Write-Host "The virtual machine ($vm) does not exists. Creating a new one." -BackgroundColor DarkGreen
+        Write-Host "The virtual machine ( $pvm ) does not exists. Creating a new one." -BackgroundColor DarkGreen
         az vm create `
-        --name $vm `
+        --name  $pvm  `
         --admin-username azureuser `
         --admin-password "3000@UserAzure" `
-        --nics $nic `
+        --nics  $pnic `
         --image "MicrosoftWindowsServer:WindowsServer:2019-datacenter-gensecond:latest" `
         --no-wait `
         --tags Project=$lab
     }
-   
     
 }else{
-    Write-Host "The virtual machine ($vm) exists. No further action is needed." -BackgroundColor DarkGreen
+    Write-Host "The virtual machines exist. No further action is needed." -BackgroundColor DarkGreen
 }
 
     printMyMessage -message "virtual machines setup completed!."
@@ -118,15 +120,42 @@ if($LASTEXITCODE -ne 0){
 
 printMyMessage -message "Alerts creation for the virtual machines." -c 0
 
+Write-Host "Creating a new action group for the alerts." -BackgroundColor DarkGreen
+az monitor action-group create `
+    --action-group-name $action_group `
+    --action email admin $e `
+    --tags Project=$lab
+
+$vm1_name = $vm + "1"
+$vm2_name = $vm + "2"
+
+do {
+        $VMPowerState = $(
+                            az vm show `
+                                --resource-group $rg1 `
+                                --name $vm1_name  `
+                                --show-details `
+                                --query 'powerState' `
+                                --output tsv
+                        )
+        
+        Write-Host "Waiting until the virtual machine start running, vm current state: $VMPowerState." -BackgroundColor DarkGreen
+
+}while ($VMPowerState -ne "VM running")
+
+$vm1ID = $(az vm show --name $vm1_name --query "id"--output tsv)
+$vm2ID = $(az vm show --name $vm2_name --query "id"--output tsv)
+
 az monitor metrics alert create `
-    -n "Cpu80PercentAlert" `
-    --resource-group "[sandbox resource group name]" `
-    --scopes $VMID `
+    --name "Cpu80PercentAlert" `
+    --resource-group $rg1 `
+    --scopes $vm1ID $vm2ID `
     --condition "max percentage CPU > 80" `
     --description "Virtual machine is running at or greater than 80% CPU utilization" `
     --evaluation-frequency 1m `
     --window-size 1m `
-    --severity 3
+    --severity 3 `
+    --action $action_group `
+    --tags Project=$lab
 
-
-    printMyMessage -message "Alerts Deployed!." -c 0
+printMyMessage -message "Alerts Deployed!." -c 0
