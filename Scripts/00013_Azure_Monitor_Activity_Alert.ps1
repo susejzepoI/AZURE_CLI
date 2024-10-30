@@ -1,7 +1,7 @@
 #Author:            Jesus Lopez Mesia
 #Linkedin:          https://www.linkedin.com/in/susejzepol/
 #Created date:      October-23-2024
-#Modified date:     October-24-2024
+#Modified date:     October-30-2024
 #Lab:               https://learn.microsoft.com/en-us/training/modules/incident-response-with-alerting-on-azure/8-exercise-activity-log-alerts
 
 [CmdletBinding()]
@@ -24,8 +24,8 @@ Write-Host "$(get-date)" -BackgroundColor DarkGreen
 
 #JLopez: Internal variables
 $day                = $(get-date -format "yyyyMMdd")
-$lab                = "lab000131" + $day
-$rg1                = $lab + "az10420241024"
+$lab                = "lab00013" + $day
+$rg1                = $lab + "az104"
 $vnet               = $lab + "Vnet"
 $subnet             = $lab + "Subnet"
 $nsg                = $lab + "NSG"
@@ -40,8 +40,11 @@ printMyMessage -message "Resource group validation done!."
 Write-Host "Setting the default resource group to $rg1." -BackgroundColor DarkGreen
 az configure --defaults group=$rg1
 
+$vm1_name = $vm + "1"
+$vm2_name = $vm + "2"
+
 #JLopez: Here I used the "2>$null" to discard any error message produced by the command. 
-az vm show --name $vm --resource-group $rg1 --output none 2>$null
+az vm show --name $vm1_name --resource-group $rg1 --output none 2>$null
 
 #JLopez: If the above command executed correctly, the $LASTEXITCODE will be zero. Otherwise, it will be a non-zero value.
 if($LASTEXITCODE -ne 0){
@@ -126,9 +129,6 @@ az monitor action-group create `
     --action email admin $e `
     --tags Project=$lab
 
-$vm1_name = $vm + "1"
-$vm2_name = $vm + "2"
-
 do {
         $VMPowerState = $(
                             az vm show `
@@ -146,6 +146,7 @@ do {
 $vm1ID = $(az vm show --name $vm1_name --query "id"--output tsv)
 $vm2ID = $(az vm show --name $vm2_name --query "id"--output tsv)
 
+Write-Host "Creating a new metric alert for each virtual machine." -BackgroundColor DarkGreen
 az monitor metrics alert create `
     --name "Cpu80PercentAlert" `
     --resource-group $rg1 `
@@ -156,6 +157,17 @@ az monitor metrics alert create `
     --window-size 1m `
     --severity 3 `
     --action $action_group `
+    --tags Project=$lab `
+    --region $l
+
+Write-Host "Creating a new activity log alert for each virtual machine in case of deletion."
+az monitor activity-log alert create `
+    --name "VMDeletionAlert" `
+    --scope $vm1ID $vm2ID `
+    --condition "category = Administrative and operationName = 'Microsoft.Compute/virtualMachines/delete' and status = 'Succeeded'" `
+    --action-group $action_group `
+    --description "The virtual machine was deleted." `
     --tags Project=$lab
+
 
 printMyMessage -message "Alerts Deployed!." -c 0
