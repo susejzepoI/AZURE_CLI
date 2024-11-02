@@ -8,8 +8,10 @@
 param (
     [string]$l = "West US",
     [string]$s = "Suscripción de Plataformas de MSDN",
-    [Parameter(Mandatory= $true, HelpMessage="Email to be used in the action group.")]
-    [string]$e
+    [Parameter(Mandatory= $true, HelpMessage="First Email to be used in the action group.")]
+    [string]$e1,
+    [Parameter(Mandatory= $true, HelpMessage="Backup Email to be used in the action group.")]
+    [string]$e2
 )
 
 #JLopez: Import the module "print-message-custom-v1.psm1".
@@ -24,14 +26,15 @@ Write-Host "$(get-date)" -BackgroundColor DarkGreen
 
 #JLopez: Internal variables
 $day                    = $(get-date -format "yyyyMMdd")
-$lab                    = "lab00013" + $day
+$lab                    = "lab0003" + $day
 $rg1                    = $lab + "az104"
 $vnet                   = $lab + "Vnet"
 $subnet                 = $lab + "Subnet"
 $nsg                    = $lab + "NSG"
 $vm                     = "lab00013VM"
 $nic                    = $lab + "NIC1az104"
-$action_group           = $lab + "ag"
+$action_group1          = $lab + "1ag"
+$action_group2          = $lab + "2ag"
 $activity_log_alert     = "VMDeletionAlert"
 $metric_alert           = "Cpu80PercentAlert"
 
@@ -114,21 +117,37 @@ if($LASTEXITCODE -ne 0){
         --image "MicrosoftWindowsServer:WindowsServer:2019-datacenter-gensecond:latest" `
         --no-wait `
         --tags Project=$lab
+
+        az monitor log-analytics workspace create `
+            --workspace-name "defaultaz104" `
+            --location $l
+
+        $vm_id = $(az vm show --name $pvm --query "id" --output tsv)
+        $name_diagnosis_log ="checkMy_" + $pvm
+        Write-Host -message "Enabling monitor diagnosis for each virtual machine!." -BackgroundColor DarkGreen
+        az monitor diagnostic-settings create `
+            --name $name_diagnosis_log `
+            --resource $vm_id `
+            --workspace "defaultaz104"
     }
     
 }else{
     Write-Host "The virtual machines exist. No further action is needed." -BackgroundColor DarkGreen
 }
-
-    printMyMessage -message "virtual machines setup completed!."
+printMyMessage -message "virtual machines setup completed!."
 
 
 printMyMessage -message "Alerts creation for the virtual machines." -c 0
 
-Write-Host "Creating a new action group for the alerts." -BackgroundColor DarkGreen
+Write-Host "Creating new action groups for the alerts." -BackgroundColor DarkGreen
 az monitor action-group create `
-    --action-group-name $action_group `
-    --action email admin $e `
+    --action-group-name $action_group1 `
+    --action email admin $e1 `
+    --tags Project=$lab
+
+az monitor action-group create `
+    --action-group-name $action_group2 `
+    --action email admin $e2 `
     --tags Project=$lab
 
 do {
@@ -163,7 +182,7 @@ if($LASTEXITCODE -ne 0){
         --evaluation-frequency 1m `
         --window-size 1m `
         --severity 3 `
-        --action $action_group `
+        --action $action_group1 `
         --tags Project=$lab `
         --region $l
 }else{
@@ -180,7 +199,7 @@ if($LASTEXITCODE -ne 0){
         --name $activity_log_alert `
         --scope $vm1ID $vm2ID `
         --condition category=Administrative and operationName='Microsoft.Compute/virtualMachines/delete' `
-        --action-group $action_group `
+        --action-group $action_group1 `
         --description "The virtual machine was deleted." `
         --tags Project=$lab
 
@@ -189,7 +208,7 @@ if($LASTEXITCODE -ne 0){
 }
 
 
-Write-host "Deleting the virtual machine ($vm1_name) to trigger the <VMDeletionAlert>." -BackgroundColor DarkGreen
+Write-host "Deleting the virtual machine ($vm1_name) to trigger the <VMDeletionAlert>." -BackgroundColor DarkYellow
 az vm delete `
     --name $vm1_name `
     --force-deletion true `
@@ -199,17 +218,30 @@ Write-host "The virtual machine ($vm1_name) was deleted." -BackgroundColor DarkG
 
 $ResourcegroupId = $(az group show --name $rg1 --query "id" --output tsv)
 
-Write-Host "Adding a alert processing rule to remove all notifications from previous rules." -BackgroundColor DarkGreen
+# Write-Host "Adding a alert processing rule to remove all notifications from previous rules." -BackgroundColor DarkGreen
+# az monitor alert-processing-rule create `
+#     --name "Remove notifications due to maintenance window" `
+#     --rule-type RemoveAllActionGroups `
+#     --scopes $ResourcegroupId `
+#     --filter-resource-type Equals "microsoft.compute/virtualmachines" `
+#     --description "Removes all notifications from action groups from all alerts."
+
+# Write-Host "Processing rule added." -BackgroundColor DarkGreen
+
+Write-Host "Adding a alert processing rule to add an action group to revious rules." -BackgroundColor DarkGreen
+
+$action_group2_id = $( az monitor action-group show $action_group2 --query "id" --output tsv)
+
 az monitor alert-processing-rule create `
-    --name "Remove notifications due to maintenance window" `
-    --rule-type RemoveAllActionGroups `
+    --name "add notification group" `
+    --rule-type AddActionGroups `
+    --action-group $action_group2_id  `
     --scopes $ResourcegroupId `
-    --filter-resource-type Equals "microsoft.compute/virtualmachines" `
-    --description "Removes all notifications from action groups from all alerts."
+    --description "Add action group to all alerts."
 
 Write-Host "Processing rule added." -BackgroundColor DarkGreen
 
-Write-Host "Removing the second virtual machine to test the processing rule." -BackgroundColor DarkGreen
+Write-Host "Deleting the second virtual machine to test the processing rule." -BackgroundColor DarkYellow
 az vm delete `
     --name $vm2_name `
     --force-deletion true `
