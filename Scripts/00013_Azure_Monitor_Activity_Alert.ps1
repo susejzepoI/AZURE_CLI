@@ -1,7 +1,7 @@
 #Author:            Jesus Lopez Mesia
 #Linkedin:          https://www.linkedin.com/in/susejzepol/
 #Created date:      October-23-2024
-#Modified date:     October-30-2024
+#Modified date:     November-01-2024
 #Lab:               https://learn.microsoft.com/en-us/training/modules/incident-response-with-alerting-on-azure/8-exercise-activity-log-alerts
 
 [CmdletBinding()]
@@ -23,16 +23,17 @@ Import-Module  "$root\utilities\print-message-custom-v1.psm1"
 Write-Host "$(get-date)" -BackgroundColor DarkGreen
 
 #JLopez: Internal variables
-$day                = $(get-date -format "yyyyMMdd")
-$lab                = "lab00013" + $day
-$rg1                = $lab + "az104"
-$vnet               = $lab + "Vnet"
-$subnet             = $lab + "Subnet"
-$nsg                = $lab + "NSG"
-$vm                 = "lab00013VM"
-$nic                = $lab + "NIC1az104"
-$action_group       = $lab + "ag"
-
+$day                    = $(get-date -format "yyyyMMdd")
+$lab                    = "lab00013" + $day
+$rg1                    = $lab + "az104"
+$vnet                   = $lab + "Vnet"
+$subnet                 = $lab + "Subnet"
+$nsg                    = $lab + "NSG"
+$vm                     = "lab00013VM"
+$nic                    = $lab + "NIC1az104"
+$action_group           = $lab + "ag"
+$activity_log_alert     = "VMDeletionAlert"
+$metric_alert           = "Cpu80PercentAlert"
 printMyMessage -message "Starting with the resource group validation." -c 0
 checkMyResourceGroup -rg $rg1 -s $s -l $l -t Project=$lab
 printMyMessage -message "Resource group validation done!."
@@ -44,7 +45,7 @@ $vm1_name = $vm + "1"
 $vm2_name = $vm + "2"
 
 #JLopez: Here I used the "2>$null" to discard any error message produced by the command. 
-az vm show --name $vm1_name --resource-group $rg1 --output none 2>$null
+az vm show --name $vm1_name --output none 2>$null
 
 #JLopez: If the above command executed correctly, the $LASTEXITCODE will be zero. Otherwise, it will be a non-zero value.
 if($LASTEXITCODE -ne 0){
@@ -146,28 +147,53 @@ do {
 $vm1ID = $(az vm show --name $vm1_name --query "id"--output tsv)
 $vm2ID = $(az vm show --name $vm2_name --query "id"--output tsv)
 
-Write-Host "Creating a new metric alert for each virtual machine." -BackgroundColor DarkGreen
-az monitor metrics alert create `
-    --name "Cpu80PercentAlert" `
-    --resource-group $rg1 `
-    --scopes $vm1ID $vm2ID `
-    --condition "max percentage CPU > 80" `
-    --description "Virtual machine is running at or greater than 80% CPU utilization" `
-    --evaluation-frequency 1m `
-    --window-size 1m `
-    --severity 3 `
-    --action $action_group `
-    --tags Project=$lab `
-    --region $l
+Write-Host "Checking if the alert ($metric_alert) exists."  -BackgroundColor DarkGreen
+az monitor metrics alert show --name $metric_alert --output none 2>$null
 
-Write-Host "Creating a new activity log alert for each virtual machine in case of deletion."
-az monitor activity-log alert create `
-    --name "VMDeletionAlert" `
-    --scope $vm1ID $vm2ID `
-    --condition "category = Administrative and operationName = 'Microsoft.Compute/virtualMachines/delete' and status = 'Succeeded'" `
-    --action-group $action_group `
-    --description "The virtual machine was deleted." `
-    --tags Project=$lab
+if($LASTEXITCODE -ne 0){
 
+    Write-Host "Creating a new metric alert for each virtual machine." -BackgroundColor DarkGreen
+    az monitor metrics alert create `
+        --name $metric_alert `
+        --resource-group $rg1 `
+        --scopes $vm1ID $vm2ID `
+        --condition "max percentage CPU > 80" `
+        --description "Virtual machine is running at or greater than 80% CPU utilization" `
+        --evaluation-frequency 1m `
+        --window-size 1m `
+        --severity 3 `
+        --action $action_group `
+        --tags Project=$lab `
+        --region $l
+}else{
+    Write-Host "The metric alert already exists. No further action is needed." -BackgroundColor DarkGreen
+}
+
+Write-Host "Checking if the alert ($activity_log_alert) exists."  -BackgroundColor DarkGreen
+az monitor activity-log alert show --name $activity_log_alert --output none 2>$null
+
+if($LASTEXITCODE -ne 0){
+
+    Write-Host "Creating a new activity log alert for each virtual machine in case of deletion." -BackgroundColor DarkGreen
+    az monitor activity-log alert create `
+        --name $activity_log_alert `
+        --scope $vm1ID $vm2ID `
+        --condition category=Administrative and operationName='Microsoft.Compute/virtualMachines/delete' `
+        --action-group $action_group `
+        --description "The virtual machine was deleted." `
+        --tags Project=$lab
+
+}else{
+    Write-Host "The activity log alert already exists. No further action is needed." -BackgroundColor DarkGreen
+}
+
+
+Write-host "Deleting the virtual machine ($vm1_name) to trigger the <VMDeletionAlert>." -BackgroundColor DarkGreen
+az vm delete `
+    --name $vm1_name `
+    --force-deletion true `
+    --yes
+
+Write-host "The virtual machine ($vm1_name) was deleted." -BackgroundColor DarkGreen
 
 printMyMessage -message "Alerts Deployed!." -c 0
