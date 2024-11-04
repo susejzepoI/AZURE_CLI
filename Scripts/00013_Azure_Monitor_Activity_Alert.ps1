@@ -25,8 +25,8 @@ Import-Module  "$root\utilities\print-message-custom-v1.psm1"
 Write-Host "$(get-date)" -BackgroundColor DarkGreen
 
 #JLopez: Internal variables
-$day                    = $(get-date -format "yyyyMMdd")
-$lab                    = "lab000131" + $day
+$day                    = $(get-date -format "MMdd")
+$lab                    = "lab00013" + $day
 $rg1                    = $lab + "az104"
 $vnet                   = $lab + "Vnet"
 $subnet                 = $lab + "Subnet"
@@ -105,7 +105,7 @@ if($LASTEXITCODE -ne 0){
             --location $l `
             --name $public_ip
     
-        Write-Host "Creating the NIC ($pnic) for the virtual machine ($pvm)."
+        Write-Host "Creating the NIC ($pnic) for the virtual machine ($pvm)." -BackgroundColor DarkGreen
         az network nic create `
             --name  $pnic `
             --vnet-name $vnet `
@@ -124,13 +124,6 @@ if($LASTEXITCODE -ne 0){
         --no-wait `
         --tags Project=$lab
 
-        $vm_id = $(az vm show --name $pvm --query "id" --output tsv)
-        $name_diagnosis_log ="checkMy_" + $pvm
-        Write-Host -message "Enabling monitor diagnosis for each virtual machine!." -BackgroundColor DarkGreen
-        az monitor diagnostic-settings create `
-            --name $name_diagnosis_log `
-            --resource $vm_id `
-            --workspace $analytics_workspace 
     }
     
 }else{
@@ -139,19 +132,7 @@ if($LASTEXITCODE -ne 0){
 printMyMessage -message "virtual machines setup completed!."
 
 
-printMyMessage -message "Alerts creation for the virtual machines." -c 0
-
-Write-Host "Creating new action groups for the alerts." -BackgroundColor DarkGreen
-az monitor action-group create `
-    --action-group-name $action_group1 `
-    --action email admin $e1 `
-    --tags Project=$lab
-
-az monitor action-group create `
-    --action-group-name $action_group2 `
-    --action email admin $e2 `
-    --tags Project=$lab
-
+printMyMessage -message "Enabling monitor diagnosis for each virtual machine!" -c 0
 do {
         $VMPowerState = $(
                             az vm show `
@@ -165,6 +146,32 @@ do {
         Write-Host "Waiting until the virtual machine start running, vm current state: $VMPowerState." -BackgroundColor DarkGreen
 
 }while ($VMPowerState -ne "VM running")
+
+for ($i = 1; $i -le 3; $i++) {
+
+    $pvm         = $vm + $i
+    $vm_id = $(az vm show --name $pvm --query "id" --output tsv)
+    $name_diagnosis_log ="checkMy_" + $pvm
+
+    az monitor diagnostic-settings create `
+        --name $name_diagnosis_log `
+        --resource $vm_id `
+        --workspace $analytics_workspace 
+}
+printMyMessage -message "Monitor diagnosis was enabled for each virtual machine!"
+
+printMyMessage -message "Alerts creation for the virtual machines." -c 0
+
+Write-Host "Creating new action groups for the alerts." -BackgroundColor DarkGreen
+az monitor action-group create `
+    --action-group-name $action_group1 `
+    --action email admin $e1 `
+    --tags Project=$lab
+
+az monitor action-group create `
+    --action-group-name $action_group2 `
+    --action email admin $e2 `
+    --tags Project=$lab
 
 $vm1ID = $(az vm show --name $vm1_name --query "id"--output tsv)
 $vm2ID = $(az vm show --name $vm2_name --query "id"--output tsv)
