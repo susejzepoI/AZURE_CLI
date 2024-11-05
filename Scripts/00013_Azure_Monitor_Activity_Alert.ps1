@@ -1,7 +1,7 @@
 #Author:            Jesus Lopez Mesia
 #Linkedin:          https://www.linkedin.com/in/susejzepol/
 #Created date:      October-23-2024
-#Modified date:     November-03-2024
+#Modified date:     November-04-2024
 #Lab:               https://learn.microsoft.com/en-us/training/modules/incident-response-with-alerting-on-azure/8-exercise-activity-log-alerts
 
 [CmdletBinding()]
@@ -26,7 +26,7 @@ Write-Host "$(get-date)" -BackgroundColor DarkGreen
 
 #JLopez: Internal variables
 $day                    = $(get-date -format "MMdd")
-$lab                    = "lab00013" + $day
+$lab                    = "lab000133" + $day
 $rg1                    = $lab + "az104"
 $vnet                   = $lab + "Vnet"
 $subnet                 = $lab + "Subnet"
@@ -35,8 +35,8 @@ $vm                     = "lab00013VM"
 $nic                    = $lab + "NIC1az104"
 $action_group1          = $lab + "1ag"
 $action_group2          = $lab + "2ag"
-$activity_log_alert     = "VMDeletionAlert"
-$metric_alert           = "Cpu80PercentAlert"
+$activity_log_alert     = "VMDeletionAlert" + $lab
+$metric_alert           = "Cpu80Alert" + $lab
 $analytics_workspace    = "defaultaz104"
 
 printMyMessage -message "Starting with the resource group validation." -c 0
@@ -236,7 +236,8 @@ az monitor alert-processing-rule create `
     --rule-type AddActionGroups `
     --action-group $action_group2_id  `
     --scopes $ResourcegroupId `
-    --description "Add action group to all alerts."
+    --description "Add action group to all alerts." `
+    --tags Project=$lab
 
 Write-Host "Processing rule added." -BackgroundColor DarkGreen
 
@@ -247,14 +248,35 @@ az vm delete `
     --yes
 Write-host "The virtual machine ($vm2_name) was deleted." -BackgroundColor DarkGreen
 
-# Write-Host "Adding a alert processing rule to remove all notifications from previous rules." -BackgroundColor DarkGreen
-# az monitor alert-processing-rule create `
-#     --name "Remove notifications due to maintenance window" `
-#     --rule-type RemoveAllActionGroups `
-#     --scopes $ResourcegroupId `
-#     --filter-resource-type Equals "microsoft.compute/virtualmachines" `
-#     --description "Removes all notifications from action groups from all alerts."
+Write-Host "Adding a alert processing rule to remove all notifications from previous rules." -BackgroundColor DarkGreen
+$start      = (Get-Date).AddMinutes(5).ToUniversalTime().ToString("yyyy-MM-dd hh:mm:ss")
+$end        = (Get-Date).AddMinutes(30).ToUniversalTime().ToString("yyyy-MM-dd hh:mm:ss")
+$TimeZone   = (Get-TimeZone).Id
 
-# Write-Host "Processing rule added." -BackgroundColor DarkGreen
 
+az monitor alert-processing-rule create `
+    --name "Remove notifications" `
+    --rule-type RemoveAllActionGroups `
+    --scopes $ResourcegroupId `
+    --filter-resource-type Equals "microsoft.compute/virtualmachines" `
+    --schedule-start-datetime $start `
+    --schedule-end-datetime $end `
+    --schedule-time-zone $TimeZone `
+    --description "Removes all notifications from action groups from all alerts." `
+    --tags Project=$lab
+
+Write-Host "Processing rule added." -BackgroundColor DarkGreen
+
+Write-Host "Checking the status for the <RemoveAllActionGroups> processing rule." -BackgroundColor DarkGreen
+do {
+    $RemoveAllActionGroups_status = $(
+                                        az monitor alert-processing-rule show `
+                                            --name "Remove notifications" `
+                                            --query "properties.enabled" `
+                                            --output tsv
+                                    )
+    Write-Host "The current status of the <RemoveAllActionGroups> processing rule is : " $RemoveAllActionGroups_status -BackgroundColor DarkGreen
+}while($RemoveAllActionGroups_status -ne "True")
+
+Write-Host "The <RemoveAllActionGroups> is now enable, you can delete the <$vm3_name> virtual machine to test the alert." -BackgroundColor DarkYellow
 printMyMessage -message "All Alerts Deployed!." -c 0
