@@ -27,8 +27,7 @@ function checkMyResourceGroup {
         [Parameter(Mandatory=$true)]
         [string]$rg,
         #Subscription
-        [Parameter(Mandatory=$true)]
-        [string]$s,
+        [string]$s = "Suscripción de Plataformas de MSDN",
         #Location
         [Parameter(Mandatory=$true)]
         [string]$l,
