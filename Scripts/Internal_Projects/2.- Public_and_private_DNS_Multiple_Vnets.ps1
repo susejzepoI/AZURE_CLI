@@ -1,7 +1,7 @@
 #Author:            Jesus Lopez Mesia
 #Linkedin:          https://www.linkedin.com/in/susejzepol/
 #Created date:      November-05-2024
-#Modified date:     November-14-2024
+#Modified date:     November-16-2024
 
 #JLopez: Import the module "print-message-custom-v1.psm1".
 if($pwd.path -like "*Scripts"){
@@ -17,7 +17,7 @@ Write-Host "$(get-date)" -BackgroundColor DarkGreen
 
 #JLopez: Internal variables
 $date                   = $(get-date -format "MMdd")
-$project                = "IP2_3_" + $date
+$project                = "IP2_1_" + $date
 $location               = "West US"
 $rg                     = "rg_" + $project 
 $nsg                    = "nsg_" + $project 
@@ -141,7 +141,7 @@ for ($i = 1; $i -le 4; $i++) {
 
     az network nsg rule create `
         --nsg-name $nsg_name `
-        --name "default-rdp"`
+        --name "Inbound-RDP"`
         --priority 110 `
         --source-address-prefixes "*" `
         --source-port-ranges "*" `
@@ -150,7 +150,20 @@ for ($i = 1; $i -le 4; $i++) {
         --access "Allow" `
         --protocol "Tcp" `
         --direction "Inbound" `
-        --description "Allow rdp connections on 3389 port (for testing only)."
+        --description "Allow Inbound RDP connections on 3389 port (for testing only)."
+
+    az network nsg rule create `
+        --nsg-name $nsg_name `
+        --name "Outbound-RDP"`
+        --priority 110 `
+        --source-address-prefixes "*" `
+        --source-port-ranges "*" `
+        --destination-address-prefixes "*" `
+        --destination-port-ranges 3389 `
+        --access "Allow" `
+        --protocol "Tcp" `
+        --direction "Outbound" `
+        --description "Allow Outbound RDP connections on 3389 port (for testing only)."
 
     az network public-ip create `
         --allocation-method "Static" `
@@ -194,20 +207,55 @@ $private_ip2 = $( az vm show --name $vm --show-details --query "privateIps" --ou
 az network private-dns record-set  a add-record `
     --record-set-name "vm2" `
     --zone-name $priv_dns `
-    --ipv4-addresses $private_ip2
+    --ipv4-address $private_ip2
 
 $vm = $vnet.Replace("vnet_","vm3" + "_")
 $private_ip3 = $( az vm show --name $vm --show-details --query "privateIps" --output tsv)
 az network private-dns record-set a add-record `
     --record-set-name "vm3" `
     --zone-name $priv_dns `
-    --ipv4-addresses $private_ip3
+    --ipv4-address $private_ip3
 
 $vm = $vnet.Replace("vnet_","vm4" + "_")
 $private_ip4 = $( az vm show --name $vm --show-details --query "privateIps" --output tsv)
 az network private-dns record-set a add-record `
     --record-set-name "vm4" `
     --zone-name $priv_dns `
-    --ipv4-addresses $private_ip4
+    --ipv4-address $private_ip4
 
 printMyMessage -message "'A' records were added!."
+
+printMyMessage -message "Adding a 'CNAME' record set manually for 'vm1' record set." -c 0
+
+$vm1_FQDN = "vm1." + $priv_dns
+az network private-dns record-set cname set-record `
+    --cname $vm1_FQDN `
+    --record-set-name "principal" `
+    --zone-name $priv_dns
+
+printMyMessage -message "'CNAME' record was added!."
+
+printMyMessage -message "Adding peering between virtual networks." -c 0
+
+Write-Host "Peering between vnet 1 and vnet 2." -BackgroundColor DarkGreen
+
+$vnet1_name   = $vnet.Replace("vnet_","vnet1_")
+$vnet1_id     = $(az network vnet show --name $vnet1_name --query "id" --output tsv)
+$vnet2_name   = $vnet.Replace("vnet_","vnet2_")
+$vnet2_id     = $(az network vnet show --name $vnet2_name --query "id" --output tsv)
+
+az network vnet peering create `
+    --name "vnet0-to-vnet1" `
+    --vnet-name $vnet1_name `
+    --remote-vnet $vnet2_id `
+    --allow-forwarded-traffic false `
+    --allow-vnet-access true
+
+az network vnet peering create `
+    --name "vnet1-to-vnet0" `
+    --vnet-name $vnet2_name `
+    --remote-vnet $vnet1_id `
+    --allow-forwarded-traffic false `
+    --allow-vnet-access true
+
+printMyMessage -message "Peering deployed!." -c 0
