@@ -17,7 +17,7 @@ Write-Host "$(get-date)" -BackgroundColor DarkGreen
 
 #JLopez: Internal variables
 $date                   = $(get-date -format "MMdd")
-$project                = "IP2_1_" + $date
+$project                = "IP2_2_" + $date
 $location               = "West US"
 $rg                     = "rg_" + $project 
 $nsg                    = "nsg_" + $project 
@@ -60,7 +60,7 @@ if ($LASTEXITCODE -ne 0 ) {
         --name $priv_dns `
         --tags Project=$Project
 }else {
-    Write-Host "The $priv_dns private DNS zone already exists, no further action is required." -BackgroundColor DarkGreen
+    Write-Host "The $priv_dns private DNS zone already exists, no further action is required." -BackgroundColor DarkYellow
 }
 
 printMyMessage -message "Private DNS zone deployed!." -c 0
@@ -129,7 +129,7 @@ for ($i = 1; $i -le 4; $i++) {
             --virtual-network $vnet_id `
             --registration-enabled true
     }else{
-        Write-Host "The linked $dns_link_name already exists, no further action is required." -BackgroundColor DarkGreen
+        Write-Host "The linked $dns_link_name already exists, no further action is required." -BackgroundColor DarkYellow
     }
 
 
@@ -195,110 +195,146 @@ printMyMessage -message "All virtual networks were deployed!."
 
 printMyMessage -message "Adding 'A' records sets manually to each virtual machine." -c 0
 
-$vm = $vnet.Replace("vnet_","vm1" + "_")
-$private_ip1 = $( az vm show --name $vm --show-details --query "privateIps" --output tsv)
-az network private-dns record-set  a add-record `
-    --record-set-name "vm1" `
-    --zone-name $priv_dns `
-    --ipv4-address $private_ip1
+az network private-dns record-set a show --name "vm1" --zone-name $priv_dns --output none 2>$null
+if ($LASTEXITCODE -ne 0) {
+    $vm = $vnet.Replace("vnet_","vm1" + "_")
+    $private_ip1 = $( az vm show --name $vm --show-details --query "privateIps" --output tsv)
+    az network private-dns record-set  a add-record `
+        --record-set-name "vm1" `
+        --zone-name $priv_dns `
+        --ipv4-address $private_ip1
+}else {
+    Write-Host "The A record set 'vm1' already exists, no further action is required." -BackgroundColor DarkYellow
+}
 
-$vm = $vnet.Replace("vnet_","vm2" + "_")
-$private_ip2 = $( az vm show --name $vm --show-details --query "privateIps" --output tsv)
-az network private-dns record-set  a add-record `
-    --record-set-name "vm2" `
-    --zone-name $priv_dns `
-    --ipv4-address $private_ip2
+az network private-dns record-set a show --name "vm2" --zone-name $priv_dns --output none 2>$null
+if ($LASTEXITCODE -ne 0) {
+    $vm = $vnet.Replace("vnet_","vm2" + "_")
+    $private_ip2 = $( az vm show --name $vm --show-details --query "privateIps" --output tsv)
+    az network private-dns record-set  a add-record `
+        --record-set-name "vm2" `
+        --zone-name $priv_dns `
+        --ipv4-address $private_ip2
+}else {
+    Write-Host "The A record set 'vm2' already exists, no further action is required." -BackgroundColor DarkYellow
+}
 
-$vm = $vnet.Replace("vnet_","vm3" + "_")
-$private_ip3 = $( az vm show --name $vm --show-details --query "privateIps" --output tsv)
-az network private-dns record-set a add-record `
-    --record-set-name "vm3" `
-    --zone-name $priv_dns `
-    --ipv4-address $private_ip3
+az network private-dns record-set a show --name "vm3" --zone-name $priv_dns --output none 2>$null
+if ($LASTEXITCODE -ne 0) {
+    $vm = $vnet.Replace("vnet_","vm3" + "_")
+    $private_ip3 = $( az vm show --name $vm --show-details --query "privateIps" --output tsv)
+    az network private-dns record-set a add-record `
+        --record-set-name "vm3" `
+        --zone-name $priv_dns `
+        --ipv4-address $private_ip3
+}else {
+    Write-Host "The A record set 'vm3' already exists, no further action is required." -BackgroundColor DarkYellow
+}
 
-$vm = $vnet.Replace("vnet_","vm4" + "_")
-$private_ip4 = $( az vm show --name $vm --show-details --query "privateIps" --output tsv)
-az network private-dns record-set a add-record `
-    --record-set-name "vm4" `
-    --zone-name $priv_dns `
-    --ipv4-address $private_ip4
+az network private-dns record-set a show --name "vm4" --zone-name $priv_dns --output none 2>$null
+if ($LASTEXITCODE -ne 0) {
+    $vm = $vnet.Replace("vnet_","vm4" + "_")
+    $private_ip4 = $( az vm show --name $vm --show-details --query "privateIps" --output tsv)
+    az network private-dns record-set a add-record `
+        --record-set-name "vm4" `
+        --zone-name $priv_dns `
+        --ipv4-address $private_ip4
+}else {
+    Write-Host "The A record set 'vm4' already exists, no further action is required." -BackgroundColor DarkYellow
+}
 
 printMyMessage -message "'A' records were added!."
 
 printMyMessage -message "Adding a 'CNAME' record set manually for 'vm1' record set." -c 0
 
-$vm1_FQDN = "vm1." + $priv_dns
-az network private-dns record-set cname set-record `
-    --cname $vm1_FQDN `
-    --record-set-name "principal" `
-    --zone-name $priv_dns
+az network private-dns record-set cname show --name "principal" --zone-name $priv_dns --output none 2>$null
+if ($LASTEXITCODE -ne 0) {
+    $vm1_FQDN = "vm1." + $priv_dns
+    az network private-dns record-set cname set-record `
+        --cname $vm1_FQDN `
+        --record-set-name "principal" `
+        --zone-name $priv_dns
+}else {
+    Write-Host "The CNAME record set 'principal' already exists, no further action is required." -BackgroundColor DarkYellow
+}
 
 printMyMessage -message "'CNAME' record was added!."
 
 printMyMessage -message "Adding peering between virtual networks." -c 0
 
+$vnet1_name   = $vnet.Replace("vnet_","vnet1_")
+
 Write-Host "Peering between vnet 1 and vnet 2." -BackgroundColor DarkGreen
 
-$vnet1_name   = $vnet.Replace("vnet_","vnet1_")
-$vnet1_id     = $(az network vnet show --name $vnet1_name --query "id" --output tsv)
-$vnet2_name   = $vnet.Replace("vnet_","vnet2_")
-$vnet2_id     = $(az network vnet show --name $vnet2_name --query "id" --output tsv)
+az network vnet peering show --vnet-name $vnet1_name --name "vnet1-to-vnet2" --output none 2>$null
+if ($LASTEXITCODE -ne 0) {
+    $vnet1_id     = $(az network vnet show --name $vnet1_name --query "id" --output tsv)
+    $vnet2_name   = $vnet.Replace("vnet_","vnet2_")
+    $vnet2_id     = $(az network vnet show --name $vnet2_name --query "id" --output tsv)
 
-az network vnet peering create `
-    --name "vnet1-to-vnet2" `
-    --vnet-name $vnet1_name `
-    --remote-vnet $vnet2_id `
-    --allow-forwarded-traffic false `
-    --allow-vnet-access true
+    az network vnet peering create `
+        --name "vnet1-to-vnet2" `
+        --vnet-name $vnet1_name `
+        --remote-vnet $vnet2_id `
+        --allow-forwarded-traffic false `
+        --allow-vnet-access true
 
-az network vnet peering create `
-    --name "vnet2-to-vnet1" `
-    --vnet-name $vnet2_name `
-    --remote-vnet $vnet1_id `
-    --allow-forwarded-traffic false `
-    --allow-vnet-access true
+    az network vnet peering create `
+        --name "vnet2-to-vnet1" `
+        --vnet-name $vnet2_name `
+        --remote-vnet $vnet1_id `
+        --allow-forwarded-traffic false `
+        --allow-vnet-access true
+}else {
+    Write-Host "The peerings already exists between vnet1 and vnet 2, no further action is required." -BackgroundColor DarkYellow
+}
 
 Write-Host "Peering between vnet 1 and vnet 3." -BackgroundColor DarkGreen
 
-$vnet1_name   = $vnet.Replace("vnet_","vnet1_")
-$vnet1_id     = $(az network vnet show --name $vnet1_name --query "id" --output tsv)
-$vnet3_name   = $vnet.Replace("vnet_","vnet3_")
-$vnet3_id     = $(az network vnet show --name $vnet3_name --query "id" --output tsv)
+az network vnet peering show --vnet-name $vnet1_name --name "vnet1-to-vnet3" --output none 2>$null
+if ($LASTEXITCODE -ne 0) {
+    $vnet3_name   = $vnet.Replace("vnet_","vnet3_")
+    $vnet3_id     = $(az network vnet show --name $vnet3_name --query "id" --output tsv)
 
-az network vnet peering create `
-    --name "vnet1-to-vnet3" `
-    --vnet-name $vnet1_name `
-    --remote-vnet $vnet3_id `
-    --allow-forwarded-traffic false `
-    --allow-vnet-access true
+    az network vnet peering create `
+        --name "vnet1-to-vnet3" `
+        --vnet-name $vnet1_name `
+        --remote-vnet $vnet3_id `
+        --allow-forwarded-traffic false `
+        --allow-vnet-access true
 
-az network vnet peering create `
-    --name "vnet3-to-vnet1" `
-    --vnet-name $vnet3_name `
-    --remote-vnet $vnet1_id `
-    --allow-forwarded-traffic false `
-    --allow-vnet-access true
+    az network vnet peering create `
+        --name "vnet3-to-vnet1" `
+        --vnet-name $vnet3_name `
+        --remote-vnet $vnet1_id `
+        --allow-forwarded-traffic false `
+        --allow-vnet-access true
+}else {
+    Write-Host "The peerings already exists between vnet 1 and vnet 3, no further action is required." -BackgroundColor DarkYellow
+}
 
 Write-Host "Peering between vnet 1 and vnet 4." -BackgroundColor DarkGreen
 
-$vnet1_name   = $vnet.Replace("vnet_","vnet1_")
-$vnet1_id     = $(az network vnet show --name $vnet1_name --query "id" --output tsv)
-$vnet4_name   = $vnet.Replace("vnet_","vnet4_")
-$vnet4_id     = $(az network vnet show --name $vnet4_name --query "id" --output tsv)
+az network vnet peering show --vnet-name $vnet1_name --name "vnet1-to-vnet4" --output none 2>$null
+if ($LASTEXITCODE -ne 0) {
+    $vnet4_name   = $vnet.Replace("vnet_","vnet4_")
+    $vnet4_id     = $(az network vnet show --name $vnet4_name --query "id" --output tsv)
 
-az network vnet peering create `
-    --name "vnet1-to-vnet4" `
-    --vnet-name $vnet1_name `
-    --remote-vnet $vnet4_id `
-    --allow-forwarded-traffic false `
-    --allow-vnet-access true
+    az network vnet peering create `
+        --name "vnet1-to-vnet4" `
+        --vnet-name $vnet1_name `
+        --remote-vnet $vnet4_id `
+        --allow-forwarded-traffic false `
+        --allow-vnet-access true
 
-az network vnet peering create `
-    --name "vnet4-to-vnet1" `
-    --vnet-name $vnet4_name `
-    --remote-vnet $vnet1_id `
-    --allow-forwarded-traffic false `
-    --allow-vnet-access true
-
+    az network vnet peering create `
+        --name "vnet4-to-vnet1" `
+        --vnet-name $vnet4_name `
+        --remote-vnet $vnet1_id `
+        --allow-forwarded-traffic false `
+        --allow-vnet-access true
+}else {
+    Write-Host "The peerings already exists between vnet 1 and vnet 4, no further action is required." -BackgroundColor DarkYellow
+}
 printMyMessage -message "Peering deployed!." -c 0
 printMyMessage -message "All resources were deployed!." -c 0
