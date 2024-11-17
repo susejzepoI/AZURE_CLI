@@ -245,17 +245,60 @@ $vnet2_name   = $vnet.Replace("vnet_","vnet2_")
 $vnet2_id     = $(az network vnet show --name $vnet2_name --query "id" --output tsv)
 
 az network vnet peering create `
-    --name "vnet0-to-vnet1" `
+    --name "vnet1-to-vnet2" `
     --vnet-name $vnet1_name `
     --remote-vnet $vnet2_id `
     --allow-forwarded-traffic false `
     --allow-vnet-access true
 
 az network vnet peering create `
-    --name "vnet1-to-vnet0" `
+    --name "vnet2-to-vnet1" `
     --vnet-name $vnet2_name `
     --remote-vnet $vnet1_id `
     --allow-forwarded-traffic false `
     --allow-vnet-access true
 
+Write-Host "Peering between vnet 1 and vnet 3." -BackgroundColor DarkGreen
+
+$vnet1_name   = $vnet.Replace("vnet_","vnet1_")
+$vnet1_id     = $(az network vnet show --name $vnet1_name --query "id" --output tsv)
+$vnet3_name   = $vnet.Replace("vnet_","vnet3_")
+$vnet3_id     = $(az network vnet show --name $vnet3_name --query "id" --output tsv)
+
+az network vnet peering create `
+    --name "vnet1-to-vnet3" `
+    --vnet-name $vnet1_name `
+    --remote-vnet $vnet3_id `
+    --allow-forwarded-traffic false `
+    --allow-vnet-access true
+
+az network vnet peering create `
+    --name "vnet3-to-vnet1" `
+    --vnet-name $vnet3_name `
+    --remote-vnet $vnet1_id `
+    --allow-forwarded-traffic false `
+    --allow-vnet-access true
+
+Write-Host "Peering between vnet 1 and vnet 4." -BackgroundColor DarkGreen
+
+$vnet1_name   = $vnet.Replace("vnet_","vnet1_")
+$vnet1_id     = $(az network vnet show --name $vnet1_name --query "id" --output tsv)
+$vnet4_name   = $vnet.Replace("vnet_","vnet4_")
+$vnet4_id     = $(az network vnet show --name $vnet4_name --query "id" --output tsv)
+
+az network vnet peering create `
+    --name "vnet1-to-vnet4" `
+    --vnet-name $vnet1_name `
+    --remote-vnet $vnet4_id `
+    --allow-forwarded-traffic false `
+    --allow-vnet-access true
+
+az network vnet peering create `
+    --name "vnet4-to-vnet1" `
+    --vnet-name $vnet4_name `
+    --remote-vnet $vnet1_id `
+    --allow-forwarded-traffic false `
+    --allow-vnet-access true
+
 printMyMessage -message "Peering deployed!." -c 0
+printMyMessage -message "All resources were deployed!." -c 0
