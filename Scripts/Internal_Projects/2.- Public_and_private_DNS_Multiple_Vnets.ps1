@@ -1,7 +1,7 @@
 #Author:            Jesus Lopez Mesia
 #Linkedin:          https://www.linkedin.com/in/susejzepol/
 #Created date:      November-05-2024
-#Modified date:     November-16-2024
+#Modified date:     November-17-2024
 
 #JLopez: Import the module "print-message-custom-v1.psm1".
 if($pwd.path -like "*Scripts"){
@@ -17,7 +17,7 @@ Write-Host "$(get-date)" -BackgroundColor DarkGreen
 
 #JLopez: Internal variables
 $date                   = $(get-date -format "MMdd")
-$project                = "IP2_2_" + $date
+$project                = "IP2_1_" + $date
 $location               = "West US"
 $rg                     = "rg_" + $project 
 $nsg                    = "nsg_" + $project 
@@ -336,5 +336,14 @@ if ($LASTEXITCODE -ne 0) {
 }else {
     Write-Host "The peerings already exists between vnet 1 and vnet 4, no further action is required." -BackgroundColor DarkYellow
 }
-printMyMessage -message "Peering deployed!." -c 0
+printMyMessage -message "Peering deployed!."
+
+printMyMessage -message "Creating the Public DNS zone ($pub_dns)."
+
+az network dns zone create `
+    --name $pub_dns `
+    --if-none-match `
+    --tags Project=$project
+
+printMyMessage -message "Public DNS zone deployed." -c 0
 printMyMessage -message "All resources were deployed!." -c 0
