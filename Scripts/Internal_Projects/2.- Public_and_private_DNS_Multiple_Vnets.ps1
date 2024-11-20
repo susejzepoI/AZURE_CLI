@@ -1,7 +1,7 @@
 #Author:            Jesus Lopez Mesia
 #Linkedin:          https://www.linkedin.com/in/susejzepol/
 #Created date:      November-05-2024
-#Modified date:     November-17-2024
+#Modified date:     November-19-2024
 
 #JLopez: Import the module "print-message-custom-v1.psm1".
 if($pwd.path -like "*Scripts"){
@@ -151,6 +151,19 @@ for ($i = 1; $i -le 4; $i++) {
         --protocol "Tcp" `
         --direction "Inbound" `
         --description "Allow Inbound RDP connections on 3389 port (for testing only)."
+
+    az network nsg rule create `
+        --nsg-name $nsg_name `
+        --name "Allow-80-InBound"`
+        --priority 120 `
+        --source-address-prefixes "*" `
+        --source-port-ranges "*" `
+        --destination-address-prefixes "*" `
+        --destination-port-ranges 80 `
+        --access "Allow" `
+        --protocol "Tcp" `
+        --direction "Inbound" `
+        --description "Allow inbound on 80 port."
 
     az network nsg rule create `
         --nsg-name $nsg_name `
@@ -342,8 +355,23 @@ printMyMessage -message "Creating the Public DNS zone ($pub_dns)."
 
 az network dns zone create `
     --name $pub_dns `
-    --if-none-match `
-    --tags Project=$project
+    --tags Project=$project `
+
+
+$public_ip1_name    = $vnet.Replace("vnet_","pip1" + "_")
+$public_ip1_id      = $(az network public-ip show --name $public_ip1_name --query "id" --output tsv)
+
+Write-Host "Adding an A record for the vm1." -BackgroundColor DarkGreen
+az network dns record-set a create `
+    --name "pvm1" `
+    --zone-name $pub_dns `
+    --target-resource $public_ip1_id #JLopez-20241119: Using this parameter creates a alias record set.
+
+Write-Host "Adding an A record for the vm1 at the apex domain." -BackgroundColor DarkGreen
+az network dns record-set a create `
+    --name "@" `
+    --zone-name $pub_dns `
+    --target-resource $public_ip1_id #JLopez-20241119: Using this parameter creates a alias record set.
 
 printMyMessage -message "Public DNS zone deployed." -c 0
 printMyMessage -message "All resources were deployed!." -c 0
