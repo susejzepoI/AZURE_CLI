@@ -374,4 +374,16 @@ az network dns record-set a create `
     --target-resource $public_ip1_id #JLopez-20241119: Using this parameter creates a alias record set.
 
 printMyMessage -message "Public DNS zone deployed." -c 0
+
+printMyMessage -message "Testing A record sets in the public DNS."
+
+$server_name1 = $(az network dns zone show --name $pub_dns --query "nameServers[0]" --output tsv)
+
+Write-Host "Testing the 'pvm1' record set with the $server_name1 server." -BackgroundColor DarkGreen
+$FQDN = "pvm1."+$pub_dns
+nslookup $FQDN $server_name1
+
+Write-Host "Testing the '@' record set with the $server_name1 server." -BackgroundColor DarkGreen
+nslookup $pub_dns $server_name1
+
 printMyMessage -message "All resources were deployed!." -c 0
