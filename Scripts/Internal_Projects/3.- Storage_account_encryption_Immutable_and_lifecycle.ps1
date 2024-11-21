@@ -2,7 +2,7 @@
 #Linkedin       :   https://www.linkedin.com/in/susejzepol/
 #Created date   :   November-20-2024
 #Modified date  :   November-21-2024
-#script Purpose :   Manage storage account lifecycle rules, Encryption and immutable storage polices.
+#Script Purpose :   Manage storage account lifecycle rules, Encryption and immutable storage polices.
 
 #JLopez: Import the module "print-message-custom-v1.psm1".
 if($pwd.path -like "*Scripts"){
@@ -18,7 +18,7 @@ Write-Host "$(get-date)" -BackgroundColor DarkGreen
 
 #JLopez: Internal variables
 $date                   = $(get-date -format "MMdd")
-$project                = "IP3_1_" + $date
+$project                = "IP3_3_" + $date
 $location1              = "South Central US"
 $location2              = "East US"
 $rg                     = "rg_" + $project 
@@ -42,10 +42,36 @@ printMyMessage -message "Resource group validation done!."
 
 printMyMessage -message "Deploying the ($storage_account1) storage account." -c 0
 
-az storage account create `
-    --name $storage_account1 `
-    --sku 'Standard_LRS' `
-    --location $location1 `
-    --enable-alw true #Jlopez: this option enable both versioning and Version-Level Immutability Support option for the storage account.
+
+az storage account show --name $storage_account1 --output none 2>$null
+
+if ($LASTEXITCODE -ne 0 ) {
+    Write-Host "Creating the storage account ($storage_account1)." -BackgroundColor DarkGreen
+    az storage account create `
+        --name $storage_account1 `
+        --sku 'Standard_LRS' `
+        --location $location1 `
+        --enable-alw true #Jlopez: this option enable both versioning and Version-Level Immutability Support option for the storage account.
+
+    Write-Host "Creating the (backups) container." -BackgroundColor DarkGreen
+    az storage container create `
+        --name "backups" `
+        --account-name $storage_account1
+
+    Write-Host "Creating the (auditlogs) container." -BackgroundColor DarkGreen
+    az storage container create `
+        --name "auditlogs" `
+        --account-name $storage_account1
+
+    Write-Host "Adding the immutability policy in the container until $expiration_time." -BackgroundColor DarkGreen
+    az storage container immutability-policy create `
+        --account-name $storage_account1 `
+        --container-name "auditlogs" `
+        --period 1
+
+}else{
+    Write-Host "The storage account ($storage_account1) already exists, no further action is required." -BackgroundColor DarkYellow
+}
+
 
 printMyMessage -message "($storage_account1) was deployed!."
