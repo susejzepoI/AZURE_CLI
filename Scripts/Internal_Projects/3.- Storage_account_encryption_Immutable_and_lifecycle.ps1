@@ -13,3 +13,21 @@ if($pwd.path -like "*Scripts"){
     $root = ".\Scripts"
 }
 Import-Module  "$root\utilities\print-message-custom-v1.psm1"
+
+Write-Host "$(get-date)" -BackgroundColor DarkGreen
+
+#JLopez: Internal variables
+$date                   = $(get-date -format "MMdd")
+$project                = "IP3_1_" + $date
+$location               = "South Central US"
+$rg                     = "rg_" + $project 
+$storage_account        = "sa_" + $project
+
+printMyMessage -message "Starting with the resource group validation." -c 0
+
+checkMyResourceGroup -rg $rg -l $location -t Project=$project
+
+Write-Host "Setting the default resource group to $rg." -BackgroundColor DarkGreen
+az configure --defaults group=$rg
+
+printMyMessage -message "Resource group validation done!."
