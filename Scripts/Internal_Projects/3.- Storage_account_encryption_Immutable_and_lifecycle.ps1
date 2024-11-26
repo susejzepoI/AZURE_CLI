@@ -1,8 +1,8 @@
 #Author         :   Jesus Lopez Mesia
 #Linkedin       :   https://www.linkedin.com/in/susejzepol/
 #Created date   :   November-20-2024
-#Modified date  :   November-21-2024
-#Script Purpose :   Manage storage account lifecycle rules, Encryption and immutable storage polices.
+#Modified date  :   November-25-2024
+#Script Purpose :   Manage storage account lifecycle rules, Encryption, Immutable blob storage and Stored access polices.
 
 #JLopez: Import the module "print-message-custom-v1.psm1".
 if($pwd.path -like "*Scripts"){
@@ -18,7 +18,7 @@ Write-Host "$(get-date)" -BackgroundColor DarkGreen
 
 #JLopez: Internal variables
 $date                   = $(get-date -format "MMdd")
-$project                = "IP3_3_" + $date
+$project                = "IP3_1_" + $date
 $location1              = "South Central US"
 $location2              = "East US"
 $rg                     = "rg_" + $project 
@@ -63,11 +63,56 @@ if ($LASTEXITCODE -ne 0 ) {
         --name "auditlogs" `
         --account-name $storage_account1
 
+    Write-Host "Creating the (dev) container." -BackgroundColor DarkGreen
+    az storage container create `
+        --name "dev" `
+        --account-name $storage_account1
+
     Write-Host "Adding the immutability policy in the container until $expiration_time." -BackgroundColor DarkGreen
     az storage container immutability-policy create `
         --account-name $storage_account1 `
         --container-name "auditlogs" `
         --period 1
+
+    Write-Host "The maximum number of immutable policies is one per container." -BackgroundColor DarkYellow
+    Write-Host "The immutability policy can't not be removed until it reaches the expiration date, it can only be extended." -BackgroundColor DarkYellow
+
+    Write-Host "Adding the access policy (read-list) in the (dev) container".
+    az storage container policy create `
+        --container-name "dev" `
+        --name "read-list" `
+        --account-name $storage_account1 `
+        --permissions rl
+
+    Write-Host "Adding the access policy (add-create-write) in the (dev) container".
+    az storage container policy create `
+        --container-name "dev" `
+        --name "add-create-write" `
+        --account-name $storage_account1 `
+        --permissions acw
+
+    Write-Host "Adding the access policy (delete) in the (dev) container".
+    az storage container policy create `
+        --container-name "dev" `
+        --name "delete" `
+        --account-name $storage_account1 `
+        --permissions d
+
+    Write-Host "Adding the access policy (read) in the (dev) container".
+    az storage container policy create `
+        --container-name "dev" `
+        --name "read" `
+        --account-name $storage_account1 `
+        --permissions r
+
+    Write-Host "Adding the access policy (full-access) in the (dev) container".
+    az storage container policy create `
+        --container-name "dev" `
+        --name "full-access" `
+        --account-name $storage_account1 `
+        --permissions racwdl
+    #JLopez-20241125: The maximum number of access policies are fine per container until the time of writing this.
+    Write-Host "The maximum number of access policies are five per container." -BackgroundColor DarkYellow
 
 }else{
     Write-Host "The storage account ($storage_account1) already exists, no further action is required." -BackgroundColor DarkYellow
