@@ -1,7 +1,7 @@
 #Author         :   Jesus Lopez Mesia
 #Linkedin       :   https://www.linkedin.com/in/susejzepol/
 #Created date   :   November-20-2024
-#Modified date  :   November-26-2024
+#Modified date  :   November-27-2024
 #Script Purpose :   Manage storage account lifecycle rules, Encryption, Immutable blob storage and Stored access polices.
 
 #JLopez: Import the module "print-message-custom-v1.psm1".
@@ -140,10 +140,27 @@ if ($LASTEXITCODE -ne 0 ) {
     az storage account management-policy create `
         --account-name $storage_account1 `
         --policy  ".\Utilities\3.1.-Lifecycle_management_rule.json"
-
 }else{
     Write-Host "The storage account ($storage_account1) already exists, no further action is required." -BackgroundColor DarkYellow
 }
 
-
 printMyMessage -message "($storage_account1) was deployed!."
+
+printMyMessage -message "Deploying the ($storage_account2) storage account." -c 0
+
+
+az storage account show --name $storage_account2 --output none 2>$null
+
+if ($LASTEXITCODE -ne 0 ) {
+    Write-Host "Creating the storage account ($storage_account2)." -BackgroundColor DarkGreen
+    az storage account create `
+        --name $storage_account2 `
+        --sku 'Standard_LRS' `
+        --location $location2 `
+        --tags Project=$Project 
+
+}else{
+    Write-Host "The storage account ($storage_account2) already exists, no further action is required." -BackgroundColor DarkYellow
+}
+
+printMyMessage -message "($storage_account2) was deployed!."
