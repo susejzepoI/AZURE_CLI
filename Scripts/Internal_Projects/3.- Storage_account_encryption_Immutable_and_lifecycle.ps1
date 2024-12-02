@@ -1,7 +1,7 @@
 #Author         :   Jesus Lopez Mesia
 #Linkedin       :   https://www.linkedin.com/in/susejzepol/
 #Created date   :   November-20-2024
-#Modified date  :   November-27-2024
+#Modified date  :   December-02-2024
 #Script Purpose :   Manage storage account lifecycle rules, Encryption, Immutable blob storage and Stored access polices.
 
 #JLopez: Import the module "print-message-custom-v1.psm1".
@@ -24,6 +24,7 @@ $location2              = "East US"
 $rg                     = "rg_"         + $project 
 $vnet                   = "vnet_"       + $Project
 $subnet                 = "subnet1_"    + $project
+$key_vault              = "vault_"      + $project
 #JLopez-20241121:   The storage account name must be unique across all existing storage account names in Azure. 
 #                   It must be 3 to 24 characters long, and can contain only lowercase letters and numbers.
 $storage_account1       = "sa1"         + $project.Replace("_","").ToLower()
@@ -152,12 +153,17 @@ printMyMessage -message "Deploying the ($storage_account2) storage account." -c 
 az storage account show --name $storage_account2 --output none 2>$null
 
 if ($LASTEXITCODE -ne 0 ) {
+
     Write-Host "Creating the storage account ($storage_account2)." -BackgroundColor DarkGreen
     az storage account create `
         --name $storage_account2 `
         --sku 'Standard_LRS' `
         --location $location2 `
         --tags Project=$Project 
+
+    az keyvault create `
+        --name $key_vault `
+        --location $location2
 
 }else{
     Write-Host "The storage account ($storage_account2) already exists, no further action is required." -BackgroundColor DarkYellow
