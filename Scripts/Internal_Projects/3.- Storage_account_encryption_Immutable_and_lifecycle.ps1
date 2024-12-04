@@ -1,7 +1,7 @@
 #Author         :   Jesus Lopez Mesia
 #Linkedin       :   https://www.linkedin.com/in/susejzepol/
 #Created date   :   November-20-2024
-#Modified date  :   December-03-2024
+#Modified date  :   December-04-2024
 #Script Purpose :   Manage storage account lifecycle rules, Encryption, Immutable blob storage and Stored access polices.
 
 #JLopez: Import the module "print-message-custom-v1.psm1".
@@ -168,11 +168,16 @@ if ($LASTEXITCODE -ne 0 ) {
         --account-name $storage_account2
 
     Write-Host "Creating the key vault ($key_vault)." -BackgroundColor DarkGreen
-    az keyvault create `
-        --name $key_vault `
-        --location $location2 `
-        --tags Project=$project `
-        --enable-rbac-authorization false ` #JLopez: to force vault access policies.
+    $VaultUri = (
+                    az keyvault create `
+                        --name $key_vault `
+                        --location $location2 `
+                        --tags Project=$project `
+                        --query "properties.vaultUri" `
+                        --output tsv `
+                        --enable-rbac-authorization false #JLopez: to force vault access policies.
+    )
+    Write-Host "The vault URI is: $VaultUri" -BackgroundColor DarkYellow
 
     Write-Host "Creating a new key ($key1) in the ($key_vault) vault." -BackgroundColor DarkGreen
     az keyvault key create `
@@ -182,6 +187,12 @@ if ($LASTEXITCODE -ne 0 ) {
         --kty RSA `
         --size 4096 `
 
+    Write-Host "Updating the encryption type of the storage account ($storage_account2) with the ($key1) key." -BackgroundColor DarkGreen
+    az storage account update `
+        --name $storage_account2 `
+        --encryption-key-source Microsoft.keyvault `
+        --encryption-key-vault $VaultUri `
+        --encryption-key-name $key1
     
 }else{
     Write-Host "The storage account ($storage_account2) already exists, no further action is required." -BackgroundColor DarkYellow
