@@ -1,7 +1,7 @@
 #Author         :   Jesus Lopez Mesia
 #Linkedin       :   https://www.linkedin.com/in/susejzepol/
 #Created date   :   November-20-2024
-#Modified date  :   December-04-2024
+#Modified date  :   December-06-2024
 #Script Purpose :   Manage storage account lifecycle rules, Encryption, Immutable blob storage and Stored access polices.
 
 #JLopez: Import the module "print-message-custom-v1.psm1".
@@ -18,7 +18,7 @@ Write-Host "$(get-date)" -BackgroundColor DarkGreen
 
 #JLopez: Internal variables
 $date                   = $(get-date -format "MMdd")
-$project                = "IP3_2_"      + $date
+$project                = "IP3_3_"      + $date
 $location1              = "South Central US"
 $location2              = "East US"
 $rg                     = "rg_"         + $project 
@@ -155,23 +155,29 @@ az storage account show --name $storage_account2 --output none 2>$null
 
 if ($LASTEXITCODE -ne 0 ) {
 
-    Write-Host "Creating the storage account ($storage_account2)." -BackgroundColor DarkGreen
-    az storage account create `
-        --name $storage_account2 `
-        --sku 'Standard_LRS' `
-        --location $location2 `
-        --tags Project=$Project
+    Write-Host "Creating the storage account ($storage_account2) and creating an system managed identity for it." -BackgroundColor DarkGreen
+    $storage_identityid = (
+                            az storage account create `
+                                --name $storage_account2 `
+                                --sku 'Standard_LRS' `
+                                --location $location2 `
+                                --assign-identity `
+                                --tags Project=$Project `
+                                --query "identity.principalId" `
+                                --output tsv
+    )
 
     Write-Host "Creating the (images) container." -BackgroundColor DarkGreen
     az storage container create `
         --name "images" `
         --account-name $storage_account2
 
-    Write-Host "Creating the key vault ($key_vault)." -BackgroundColor DarkGreen
+    Write-Host "Creating the key vault ($key_vault) and enabling soft delete." -BackgroundColor DarkGreen
     $VaultUri = (
                     az keyvault create `
                         --name $key_vault `
                         --location $location2 `
+                        --enable-purge-protection true `
                         --tags Project=$project `
                         --query "properties.vaultUri" `
                         --output tsv `
@@ -186,13 +192,22 @@ if ($LASTEXITCODE -ne 0 ) {
         --protection software `
         --kty RSA `
         --size 4096 `
+        --tags Project=$project
+
+    #JLopez-20241206: I need to grant get wrapkey and unwrapkey permissions to the storage account in order to access to the key.
+    Write-Host "Updating the access policy of the key vault to grant permissions to the storage account." -BackgroundColor DarkGreen
+    az keyvault set-policy `
+        --name $key_vault `
+        --object-id $storage_identityid `
+        --key-permissions get wrapKey unwrapKey
 
     Write-Host "Updating the encryption type of the storage account ($storage_account2) with the ($key1) key." -BackgroundColor DarkGreen
     az storage account update `
         --name $storage_account2 `
+        --encryption-key-name $key1 `
         --encryption-key-source Microsoft.keyvault `
-        --encryption-key-vault $VaultUri `
-        --encryption-key-name $key1
+        --encryption-key-vault $VaultUri 
+
     
 }else{
     Write-Host "The storage account ($storage_account2) already exists, no further action is required." -BackgroundColor DarkYellow
