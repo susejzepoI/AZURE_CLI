@@ -1,7 +1,7 @@
 #Author         :   Jesus Lopez Mesia
 #Linkedin       :   https://www.linkedin.com/in/susejzepol/
 #Created date   :   November-20-2024
-#Modified date  :   December-06-2024
+#Modified date  :   December-09-2024
 #Script Purpose :   Manage storage account lifecycle rules, Encryption, Immutable blob storage and Stored access polices.
 
 #JLopez: Import the module "print-message-custom-v1.psm1".
@@ -214,3 +214,33 @@ if ($LASTEXITCODE -ne 0 ) {
 }
 
 printMyMessage -message "($storage_account2) was deployed!."
+
+printMyMessage -message "Deploying the ($storage_account3) and ($storage_account4) storage accounts." -c 0
+
+
+az storage account show --name $storage_account3 --output none 2>$null
+
+if ($LASTEXITCODE -ne 0 ) {
+
+    Write-Host "Creating the storage account ($storage_account3)." -BackgroundColor DarkGreen
+    az storage account create `
+        --name $storage_account3 `
+        --location $location2 `
+        --tags Project=$Project 
+
+    az storage account show --name $storage_account4 --output none 2>$null
+    if ($LASTEXITCODE -ne 0 ) {
+        Write-Host "Creating the storage account ($storage_account4)." -BackgroundColor DarkGreen
+        az storage account create `
+            --name $storage_account4 `
+            --location $location2 `
+            --tags Project=$Project 
+        }else{
+            Write-Host "The storage account ($storage_account4) already exists, no further action is required." -BackgroundColor DarkYellow
+        }
+
+}else{
+    Write-Host "The storage account ($storage_account3) already exists, no further action is required." -BackgroundColor DarkYellow
+}
+
+printMyMessage -message "($storage_account3) and ($storage_account4) were deployed!."
