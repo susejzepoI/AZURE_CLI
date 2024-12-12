@@ -1,7 +1,7 @@
 #Author         :   Jesus Lopez Mesia
 #Linkedin       :   https://www.linkedin.com/in/susejzepol/
 #Created date   :   November-20-2024
-#Modified date  :   December-10-2024
+#Modified date  :   December-11-2024
 #Script Purpose :   Manage storage account lifecycle rules, Encryption, Immutable blob storage and Stored access polices.
 
 #JLopez: Import the module "print-message-custom-v1.psm1".
