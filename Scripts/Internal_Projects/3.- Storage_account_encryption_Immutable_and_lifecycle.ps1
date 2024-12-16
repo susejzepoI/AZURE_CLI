@@ -1,7 +1,7 @@
 #Author         :   Jesus Lopez Mesia
 #Linkedin       :   https://www.linkedin.com/in/susejzepol/
 #Created date   :   November-20-2024
-#Modified date  :   December-11-2024
+#Modified date  :   December-15-2024
 #Script Purpose :   Manage storage account lifecycle rules, Encryption, Immutable blob storage and Stored access polices.
 
 #JLopez: Import the module "print-message-custom-v1.psm1".
@@ -228,6 +228,11 @@ if ($LASTEXITCODE -ne 0 ) {
         --location $location2 `
         --tags Project=$Project 
 
+    Write-Host "Creating the (data) container." -BackgroundColor DarkGreen
+    az storage container create `
+        --name "data" `
+        --account-name $storage_account3
+
     az storage account show --name $storage_account4 --output none 2>$null
     if ($LASTEXITCODE -ne 0 ) {
         Write-Host "Creating the storage account ($storage_account4)." -BackgroundColor DarkGreen
@@ -235,6 +240,11 @@ if ($LASTEXITCODE -ne 0 ) {
             --name $storage_account4 `
             --location $location2 `
             --tags Project=$Project 
+
+        Write-Host "Creating the (replica) container." -BackgroundColor DarkGreen
+        az storage container create `
+            --name "replica" `
+            --account-name $storage_account4
         }else{
             Write-Host "The storage account ($storage_account4) already exists, no further action is required." -BackgroundColor DarkYellow
         }
