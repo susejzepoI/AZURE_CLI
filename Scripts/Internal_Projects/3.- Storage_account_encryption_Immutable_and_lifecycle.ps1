@@ -1,7 +1,7 @@
 #Author         :   Jesus Lopez Mesia
 #Linkedin       :   https://www.linkedin.com/in/susejzepol/
 #Created date   :   November-20-2024
-#Modified date  :   December-16-2024
+#Modified date  :   December-18-2024
 #Script Purpose :   Manage storage account lifecycle rules, Encryption, Immutable blob storage and Stored access polices.
 
 #JLopez: Import the module "print-message-custom-v1.psm1".
@@ -18,7 +18,7 @@ Write-Host "$(get-date)" -BackgroundColor DarkGreen
 
 #JLopez: Internal variables
 $date                   = $(get-date -format "MMdd")
-$project                = "IP3_3_"      + $date
+$project                = "IP3_2_"      + $date
 $location1              = "South Central US"
 $location2              = "East US"
 $rg                     = "rg_"         + $project 
@@ -245,9 +245,32 @@ if ($LASTEXITCODE -ne 0 ) {
         az storage container create `
             --name "replica" `
             --account-name $storage_account4
-        }else{
-            Write-Host "The storage account ($storage_account4) already exists, no further action is required." -BackgroundColor DarkYellow
-        }
+    }else{
+        Write-Host "The storage account ($storage_account4) already exists, no further action is required." -BackgroundColor DarkYellow
+    }
+    Write-Host "Enabling versioning and change feed in the $storage_account3." -BackgroundColor DarkGreen
+    az storage account blob-service-properties update `
+        --account-name $storage_account3 `
+        --enable-versioning true `
+        --enable-change-feed true
+
+    Write-Host "Enabling change feed in the $storage_account4." -BackgroundColor DarkGreen
+    az storage account blob-service-properties update `
+        --account-name $storage_account4 `
+        --enable-change-feed true  
+
+    #JLopez-20241218: Disabled, the object replication will be created manually for now.
+    # $policyId = "ReplicationPolicy-$(Get-Date -Format yyyyMMddHHmmss)"
+    # Write-Host "Enabling the object replication from the "$storage_account3"(data) to the "$storage_account4"(replica)." -BackgroundColor DarkGreen
+    # az storage account or-policy create `
+    #     --account-name $storage_account3 `
+    #     --source-account $storage_account3 `
+    #     --destination-account $storage_account4 `
+    #     --source-container "data" `
+    #     --destination-container "replica" `
+    #     --policy-id $policyId
+
+    Write-Host "Object replication policy created." -BackgroundColor DarkGreen
 
 }else{
     Write-Host "The storage account ($storage_account3) already exists, no further action is required." -BackgroundColor DarkYellow
