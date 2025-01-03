@@ -197,7 +197,7 @@ printMyMessage -message "Deploying the Bastion instance in ($location1) location
         --name PrincipalBastion `
         --public-ip-address $public_ip `
         --vnet-name "vnet3" `
-        --location $location3 `
+        --location $location1 `
         --tags Project=$project
 
 printMyMessage -message "Bastion instance deployed!."
