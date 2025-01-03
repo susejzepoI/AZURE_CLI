@@ -1,7 +1,7 @@
 #Author         :   Jesus Lopez Mesia
 #Linkedin       :   https://www.linkedin.com/in/susejzepol/
 #Created date   :   December-19-2024
-#Modified date  :   December-19-2024
+#Modified date  :   January-03-2025
 #Script Purpose :   Created a single azure bastion for all virtual machines in different regions and 
 #                   using hub-and-spoke topology and peering between vnets, 
 #                   deploy virtual machines in a proximity placement group.
@@ -25,6 +25,7 @@ $location1                  = "South Central US"
 $location2                  = "East US"
 $location3                  = "West US"
 $location4                  = "West US 2"
+$public_ip                  = "bastion-ip"       
 $rg1                        = "rg1_"        + $project 
 $rg2                        = "rg2_"        + $project
 $rg3                        = "rg3_"        + $project 
@@ -45,7 +46,7 @@ printMyMessage -message "Resource groups validations done!."
 
 printMyMessage -message "Starting with the virtual machine deployment." -c 0
 
-    for ($i = 1; $i -le 4; $i++) {
+    for ($i = 3; $i -le 3; $i++) {
 
         $vnet_name = $vnet.Replace("vnet", "vnet$i")
         $nic_name = $nic.Replace("nic", "nic$i")
@@ -60,7 +61,7 @@ printMyMessage -message "Starting with the virtual machine deployment." -c 0
                     $default_subnet             = "default" 
                     $default_subnet_address     = "11.0.1.0/24"
                     #JLopez-20241219: This is required in order to connect the Bastion to each subnet and this subnet have to be exclusive for azure bastion.
-                    $bastion_subnet             = "azurebastionsbunet" 
+                    $bastion_subnet             = "AzureBastionSubnet" 
                     $bastion_subnet_address     = "11.0.2.0/26"
                 }
             2 
@@ -71,7 +72,7 @@ printMyMessage -message "Starting with the virtual machine deployment." -c 0
                     $default_subnet             = "default" 
                     $default_subnet_address     = "12.0.1.0/24"
                     #JLopez-20241219: This is required in order to connect the Bastion to each subnet and this subnet have to be exclusive for azure bastion.
-                    $bastion_subnet             = "azurebastionsbunet" 
+                    $bastion_subnet             = "AzureBastionSubnet" 
                     $bastion_subnet_address     = "12.0.2.0/26"
                 }
             3 
@@ -82,7 +83,7 @@ printMyMessage -message "Starting with the virtual machine deployment." -c 0
                     $default_subnet             = "default" 
                     $default_subnet_address     = "13.0.1.0/24"
                     #JLopez-20241219: This is required in order to connect the Bastion to each subnet and this subnet have to be exclusive for azure bastion.
-                    $bastion_subnet             = "azurebastionsbunet" 
+                    $bastion_subnet             = "AzureBastionSubnet" 
                     $bastion_subnet_address     = "13.0.2.0/26"
                 }
             default 
@@ -93,7 +94,7 @@ printMyMessage -message "Starting with the virtual machine deployment." -c 0
                     $default_subnet             = "default" 
                     $default_subnet_address     = "14.0.1.0/24"
                     #JLopez-20241219: This is required in order to connect the Bastion to each subnet and this subnet have to be exclusive for azure bastion.
-                    $bastion_subnet             = "azurebastionsbunet" 
+                    $bastion_subnet             = "AzureBastionSubnet" 
                     $bastion_subnet_address     = "14.0.2.0/26"
                 }
         }
@@ -137,9 +138,18 @@ az configure --defaults group=$rg3
 
 printMyMessage -message "Deploying the Bastion instance in ($location3) location." -c 0
 
+    Write-Host "Deploying the public ip address for the bastion." -BackgroundColor DarkGreen
+    #JLopez-20250103: The public ip need to be in the same region where the bastion is going to be deployed.
+    az network public-ip create `
+        --name $public_ip `
+        --location $location3 `
+        --sku "Standard" `
+        --allocation-method "Static" `
+        --tags Project=$project
+
     az network bastion create `
         --name PrincipalBastion `
-        --public-ip-address "bastion-ip" `
+        --public-ip-address $public_ip `
         --vnet-name "vnet3" `
         --location $location3 `
         --tags Project=$project
