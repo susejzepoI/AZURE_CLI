@@ -1,7 +1,7 @@
 #Author         :   Jesus Lopez Mesia
 #Linkedin       :   https://www.linkedin.com/in/susejzepol/
 #Created date   :   December-19-2024
-#Modified date  :   January-03-2025
+#Modified date  :   January-07-2025
 #Script Purpose :   Created a single azure bastion for all virtual machines in different regions and 
 #                   using hub-and-spoke topology and peering between vnets, 
 #                   deploy virtual machines in a proximity placement group.
@@ -23,10 +23,11 @@ $date                       = $(get-date -format "yyyyMMdd")
 $project                    = "IP4_1_"      + $date
 $location1                  = "South Central US"
 $public_ip                  = "Hubbastion-ip"       
-$rg1                        = "rg1_spoke_"        + $project 
-$rg2                        = "rg2_spoke_"        + $project
+$rg1                        = "rg1_spoke_"      + $project 
+$rg2                        = "rg2_spoke_"      + $project
 $rg3                        = "rg3_hub_"        + $project 
-$rg4                        = "rg4_spoke_"        + $project 
+$rg4                        = "rg4_spoke_"      + $project 
+$ppg                        = "ppg1"            + $project 
 $vm                         = "vm"
 $nic                        = "nic"
 $vnet                       = "vnet"
@@ -39,6 +40,25 @@ printMyMessage -message "Starting with the resource groups validations." -c 0
     checkMyResourceGroup -rg $rg4 -l $location1 -t Project=$project
 
 printMyMessage -message "Resource groups validations done!."
+
+printMyMessage -message "Creating the proximity placement group." -c 0
+    
+    Write-Host "Setting the default resource group to $rg1." -BackgroundColor DarkGreen
+    az configure --defaults group=$rg1
+    az configure --defaults location=$location1
+
+    #JLopez-20250701: 
+    #                A proximity placement group is a resource in azure.
+    #                You need to create one before using it with other resources.
+    $ppg_id =   (
+            az ppg create --name $ppg  `
+                --type "Standard"  `
+                --tags Project=$project  `
+                --query "id"  `
+                --output tsv
+        )
+
+printMyMessage -message "Proximity placement group created."
 
 
 printMyMessage -message "Starting with the virtual machine deployment." -c 0
@@ -119,6 +139,7 @@ printMyMessage -message "Starting with the virtual machine deployment." -c 0
             --admin-username azureuser `
             --admin-password "3000@UserAzure" `
             --nics $nic_name `
+            --ppg $ppg_id `
             --location $location1 `
             --tags Project=$project `
             --no-wait
