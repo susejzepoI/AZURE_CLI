@@ -1,9 +1,9 @@
 #Author         :   Jesus Lopez Mesia
 #Linkedin       :   https://www.linkedin.com/in/susejzepol/
 #Created date   :   December-19-2024
-#Modified date  :   January-07-2025
-#Script Purpose :   Created a single azure bastion for all virtual machines in different regions and 
-#                   using hub-and-spoke topology and peering between vnets, 
+#Modified date  :   January-08-2025
+#Script Purpose :   Created a single azure bastion for all virtual machines in the same region and 
+#                   using an hub-and-spoke topology with peering between vnets, 
 #                   deploy virtual machines in a proximity placement group.
 
 #JLopez: Import the module "print-message-custom-v1.psm1".
