@@ -1,16 +1,18 @@
 #Author         :   Jesus Lopez Mesia
 #Linkedin       :   https://www.linkedin.com/in/susejzepol/
 #Created date   :   January-08-2025
-#Modified date  :   January-08-2025
+#Modified date  :   January-09-2025
 #Script Purpose :   This script delete all the resources deployed in resources
 #                   groups with an specif tag.
 
 [CmdletBinding()]
 param (
-    [Parameter(Mandatory=$true,HelpMessage="Tag value to search for the resources to delete.")]
-    [string]$tagValue,
     [Parameter(Mandatory=$true,HelpMessage="Subscripton name.")]
-    [string]$subscriptionName
+    [string]$subscriptionName,
+    [Parameter(Mandatory=$true,HelpMessage="Tag name to search for the resources to delete.")]
+    [string]$tagName,
+    [Parameter(Mandatory=$true,HelpMessage="Tag value to search for the resources to delete.")]
+    [string]$tagValue
 )
 
 #JLopez: Import the module "print-message-custom-v1.psm1".
@@ -31,7 +33,7 @@ printMyMessage -message "Looking for all the resource groups with the tag value 
     az account set --subscription $subscriptionName
 
     # Get all resource groups with the specified tag value
-    $resourceGroups = $(az group list --query "[?tags.TagName=='$tagValue'].name" -o tsv)
+    $resourceGroups = $(az group list --query "[?tags.$tagName=='$tagValue'].name" -o tsv)
 
     foreach ($rg in $resourceGroups) {
         Write-Host "Resource group found: $rg" -BackgroundColor DarkGreen
@@ -39,7 +41,9 @@ printMyMessage -message "Looking for all the resource groups with the tag value 
     
 printMyMessage -message "Resource groups validations already done." 
 
-$response = Read-Host "Do you want to delete all the resource groups found? (y/n)" -BackgroundColor DarkYellow
+$response = Read-Host "Do you want to delete all the resource groups found? (y/n)"
+$response = $response.ToLower()
+
 if ($response -ne 'y') {
     Write-Host "Operation cancelled by the user." -BackgroundColor DarkRed
     exit
@@ -52,4 +56,4 @@ printMyMessage -message "Deleting all resource groups with the tag value ($tagVa
         az group delete --name $rg --yes --no-wait
     }
 
-printMyMessage -message "All resources groups were delete in the subscription ($subscriptionName)." -c 0
+printMyMessage -message "All resources groups were delete in the subscription ($subscriptionName)."
