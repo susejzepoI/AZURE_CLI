@@ -27,33 +27,38 @@ Import-Module  "$root\utilities\print-message-custom-v1.psm1"
 
 Write-Host "$(get-date)" -BackgroundColor DarkGreen
 
-printMyMessage -message "Looking for all the resource groups with the tag value ($tagValue)." -c 0
-    # Set the subscription context
-    Write-Host "Setting the subscription context to ($subscriptionName)." -BackgroundColor DarkYellow
-    az account set --subscription $subscriptionName
 
-    # Get all resource groups with the specified tag value
-    $resourceGroups = $(az group list --query "[?tags.$tagName=='$tagValue'].name" -o tsv)
+# if($LASTEXITCODE -ne 0){
+if($commandOutput -notmatch "doesn't exist" -and $commandOutput -notmatch "ERROR"){
+    printMyMessage -message "Looking for all the resource groups with the tag value ($tagValue)." -c 0
+        Write-Host "Setting the subscription context to ($subscriptionName)." -BackgroundColor DarkYellow
+        # Set the subscription context
+        az account set --subscription $subscriptionName
+        # Get all resource groups with the specified tag value
+        $resourceGroups = $(az group list --query "[?tags.$tagName=='$tagValue'].name" -o tsv)
 
-    foreach ($rg in $resourceGroups) {
-        Write-Host "Resource group found: $rg" -BackgroundColor DarkGreen
-    }
-    
-printMyMessage -message "Resource groups validations already done." 
+        foreach ($rg in $resourceGroups) {
+            Write-Host "Resource group found: $rg" -BackgroundColor DarkGreen
+        }
+        
+    printMyMessage -message "Resource groups validations already done." 
 
-$response = Read-Host "Do you want to delete all the resource groups found? (y/n)"
-$response = $response.ToLower()
+        $response = Read-Host "Do you want to delete all the resource groups found? (y/n)"
+        $response = $response.ToLower()
 
-if ($response -ne 'y') {
-    Write-Host "Operation cancelled by the user." -BackgroundColor DarkRed
-    exit
+        if ($response -ne 'y') {
+            Write-Host "Operation cancelled by the user." -BackgroundColor DarkRed
+            exit
+        }
+
+    printMyMessage -message "Deleting all resource groups with the tag value ($tagValue)." 
+
+        foreach ($rg in $resourceGroups) {
+            printMyMessage -message "Deleting resource group: $rg" -c 0
+            az group delete --name $rg --yes --no-wait
+        }
+
+    printMyMessage -message "All resources groups were delete in the subscription ($subscriptionName)."
+}else{
+    Write-Host "There is a problem with the subscription context ($subscriptionName)." -BackgroundColor DarkRed
 }
-
-printMyMessage -message "Deleting all resource groups with the tag value ($tagValue)." 
-
-    foreach ($rg in $resourceGroups) {
-        printMyMessage -message "Deleting resource group: $rg" -c 0
-        az group delete --name $rg --yes --no-wait
-    }
-
-printMyMessage -message "All resources groups were delete in the subscription ($subscriptionName)."
