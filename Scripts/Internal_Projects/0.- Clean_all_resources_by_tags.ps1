@@ -1,7 +1,7 @@
 #Author         :   Jesus Lopez Mesia
 #Linkedin       :   https://www.linkedin.com/in/susejzepol/
 #Created date   :   January-08-2025
-#Modified date  :   January-09-2025
+#Modified date  :   January-15-2025
 #Script Purpose :   This script delete all the resources deployed in resources
 #                   groups with an specif tag.
 
@@ -27,10 +27,14 @@ Import-Module  "$root\utilities\print-message-custom-v1.psm1"
 
 Write-Host "$(get-date)" -BackgroundColor DarkGreen
 
+#JLopez: Check if the subscription name exists.
+$subscriptionNameExists = $(az account list --query "[?name=='$subscriptionName'].name" -o tsv) 
 
-# if($LASTEXITCODE -ne 0){
-if($commandOutput -notmatch "doesn't exist" -and $commandOutput -notmatch "ERROR"){
+if (-not $subscriptionNameExists) {
+    Write-Host "The subscription ($subscriptionName) does not exists." -BackgroundColor DarkRed
+} else {
     printMyMessage -message "Looking for all the resource groups with the tag value ($tagValue)." -c 0
+        
         Write-Host "Setting the subscription context to ($subscriptionName)." -BackgroundColor DarkYellow
         # Set the subscription context
         az account set --subscription $subscriptionName
@@ -59,6 +63,4 @@ if($commandOutput -notmatch "doesn't exist" -and $commandOutput -notmatch "ERROR
         }
 
     printMyMessage -message "All resources groups were delete in the subscription ($subscriptionName)."
-}else{
-    Write-Host "There is a problem with the subscription context ($subscriptionName)." -BackgroundColor DarkRed
 }
