@@ -1,7 +1,7 @@
 #Author         :   Jesus Lopez Mesia
 #Linkedin       :   https://www.linkedin.com/in/susejzepol/
 #Created date   :   January-08-2025
-#Modified date  :   January-15-2025
+#Modified date  :   January-16-2025
 #Script Purpose :   This script delete all the resources deployed in resources
 #                   groups with an specif tag.
 
@@ -41,8 +41,13 @@ if (-not $subscriptionNameExists) {
         # Get all resource groups with the specified tag value
         $resourceGroups = $(az group list --query "[?tags.$tagName=='$tagValue'].name" -o tsv)
 
+        if(-not $resourceGroups){
+            write-host "No resource groups found with the tag value ($tagValue)." -BackgroundColor DarkRed
+            exit
+        }
+
         foreach ($rg in $resourceGroups) {
-            Write-Host "Resource group found: $rg" -BackgroundColor DarkGreen
+            Write-Host "Resource group found: $rg" -BackgroundColor DarkYellow
         }
         
     printMyMessage -message "Resource groups validations already done." 
