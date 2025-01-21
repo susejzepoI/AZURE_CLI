@@ -1,7 +1,7 @@
 #Author         :   Jesus Lopez Mesia
 #Linkedin       :   https://www.linkedin.com/in/susejzepol/
 #Created date   :   January-16-2025
-#Modified date  :   January-16-2025
+#Modified date  :   January-20-2025
 #Script Purpose :   This script deploys a storage account with a static web page.
 
 #JLopez: Import the module "print-message-custom-v1.psm1".
@@ -16,7 +16,7 @@ Write-Host "$(get-date)" -BackgroundColor DarkGreen
 
 #JLopez: Internal variables
 $date                       = $(get-date -format "yyyyMMdd")
-$project                    = "IP5_3_"      + $date
+$project                    = "IP5_2_"      + $date
 $location                   = "West US"
 $rg                         = "rg_"         + $project 
 $storage_account            = "st"          + $project.Replace("_","").ToLower()
@@ -45,16 +45,19 @@ printMyMessage -message "Creating a new storage account ($storage_account)." -c 
         --allow-blob-public-access true
     
     Write-Host "Enabling the static website feature." -BackgroundColor DarkGreen
-    $primaryEndpoint = 
-                        $(
                             az storage blob service-properties update `
                                 --account-name $storage_account `
                                 --static-website `
                                 --index-document index.html `
                                 --404-document error.html `
+                                --output none
+
+    $primaryEndpoint = $(
+                            az storage account show --name $storage_account `
                                 --query "primaryEndpoints.web" `
                                 --output tsv
                         )
+
     Write-Host "The endpoint for the web site app is: $primaryEndpoint" -BackgroundColor DarkYellow
 
 
