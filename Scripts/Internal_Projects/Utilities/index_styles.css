@@ -1,0 +1,38 @@
+/* Background effect */
+body {
+    background: linear-gradient(to right, #ff7e5f, #feb47b);
+    font-family: Arial, sans-serif;
+    color: #333;
+}
+
+/* Styles for different kinds of words */
+h1, h2, h3, h4, h5, h6 {
+    color: #fff;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+p {
+    font-size: 16px;
+    line-height: 1.6;
+}
+
+strong {
+    color: #ff7e5f;
+    font-weight: bold;
+}
+
+em {
+    color: #feb47b;
+    font-style: italic;
+}
+
+a {
+    color: #fff;
+    text-decoration: none;
+    border-bottom: 1px dashed #fff;
+}
+
+a:hover {
+    color: #ff7e5f;
+    border-bottom: 1px solid #ff7e5f;
+}
