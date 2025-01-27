@@ -1,7 +1,7 @@
 #Author         :   Jesus Lopez Mesia
 #Linkedin       :   https://www.linkedin.com/in/susejzepol/
 #Created date   :   January-16-2025
-#Modified date  :   January-23-2025
+#Modified date  :   January-26-2025
 #Script Purpose :   This script deploys a storage account with a static web page.
 
 #JLopez: Import the module "print-message-custom-v1.psm1".
@@ -64,9 +64,19 @@ printMyMessage -message "Uploading the webside files into the $web container." -
     
     az storage blob upload-batch `
         --account-name $storage_account `
-        --destination "$web" `
+        --destination '$web' `
         --source ".\Utilities\" `
-        --pattern "*.html"	
+        --pattern "*.html" `
+        --overwrite true `
+        --metadata Project=$project
+
+    az storage blob upload-batch `
+        --account-name $storage_account `
+        --destination '$web' `
+        --source ".\Utilities\" `
+        --pattern "*.css" `
+        --overwrite true `
+        --metadata Project=$project
 
 printMyMessage -message "Webside files deployed into the $web container."
 Write-Host "The endpoint for the web site app is: $primaryEndpoint" -BackgroundColor DarkYellow
