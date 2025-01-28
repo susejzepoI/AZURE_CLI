@@ -20,7 +20,7 @@ $project                    = "IP5_1_"      + $date
 $location                   = "West US"
 $rg                         = "rg_"         + $project 
 $storage_account            = "st"          + $project.Replace("_","").ToLower()
-
+$dns_name                   = "www.myCompany_" + $project.Replace("_","").ToLower() + ".com"
 
 printMyMessage -message "Starting with the resource groups validations." -c 0
 
@@ -79,4 +79,12 @@ printMyMessage -message "Uploading the webside files into the $web container." -
         --metadata Project=$project
 
 printMyMessage -message "Webside files deployed into the $web container."
+
+printMyMessage -message "Creating a Public DNS to create an alias for the webside." -c 0
+    
+    az network dns zone create `
+        --name $dns_name `
+        --tags Project=$project
+
+printMyMessage -message "Public DNS deployed."
 Write-Host "The endpoint for the web site app is: $primaryEndpoint" -BackgroundColor DarkYellow
