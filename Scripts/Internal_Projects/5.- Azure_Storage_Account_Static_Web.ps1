@@ -1,7 +1,7 @@
 #Author         :   Jesus Lopez Mesia
 #Linkedin       :   https://www.linkedin.com/in/susejzepol/
 #Created date   :   January-16-2025
-#Modified date  :   January-26-2025
+#Modified date  :   January-27-2025
 #Script Purpose :   This script deploys a storage account with a static web page.
 
 #JLopez: Import the module "print-message-custom-v1.psm1".
