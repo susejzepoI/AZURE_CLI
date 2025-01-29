@@ -1,7 +1,7 @@
 #Author         :   Jesus Lopez Mesia
 #Linkedin       :   https://www.linkedin.com/in/susejzepol/
 #Created date   :   January-16-2025
-#Modified date  :   January-27-2025
+#Modified date  :   January-28-2025
 #Script Purpose :   This script deploys a storage account with a static web page.
 
 #JLopez: Import the module "print-message-custom-v1.psm1".
@@ -20,7 +20,7 @@ $project                    = "IP5_1_"      + $date
 $location                   = "West US"
 $rg                         = "rg_"         + $project 
 $storage_account            = "st"          + $project.Replace("_","").ToLower()
-$dns_name                   = "www.myCompany_" + $project.Replace("_","").ToLower() + ".com"
+$dns_name                   = "myCompany_" + $project.Replace("_","").ToLower() + ".com"
 
 printMyMessage -message "Starting with the resource groups validations." -c 0
 
@@ -86,5 +86,17 @@ printMyMessage -message "Creating a Public DNS to create an alias for the websid
         --name $dns_name `
         --tags Project=$project
 
+    az network dns record-set cname set-record `
+        --zone-name $dns_name `
+        --record-set-name "www" `
+        --cname stip5120250128.z22.web.core.windows.net
+    
+    $cname = "www." + $dns_name
+    Write-Host "Associating the custom domain with the Azure storage account." -BackgroundColor DarkGreen
+    az storage account update `
+        --name $storage_account `
+        --custom-domain $cname 
+
 printMyMessage -message "Public DNS deployed."
 Write-Host "The endpoint for the web site app is: $primaryEndpoint" -BackgroundColor DarkYellow
+Write-Host "The custom domain for the web site app is: $cname" -BackgroundColor DarkYellow
