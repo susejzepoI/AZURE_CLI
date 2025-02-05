@@ -1,7 +1,7 @@
 #Author         :   Jesus Lopez Mesia
 #Linkedin       :   https://www.linkedin.com/in/susejzepol/
 #Created date   :   January-16-2025
-#Modified date  :   January-28-2025
+#Modified date  :   February-05-2025
 #Script Purpose :   This script deploys a storage account with a static web page.
 
 #JLopez: Import the module "print-message-custom-v1.psm1".
@@ -16,11 +16,11 @@ Write-Host "$(get-date)" -BackgroundColor DarkGreen
 
 #JLopez: Internal variables
 $date                       = $(get-date -format "yyyyMMdd")
-$project                    = "IP5_1_"      + $date
+$project                    = "IP5_2_"      + $date
 $location                   = "West US"
 $rg                         = "rg_"         + $project 
 $storage_account            = "st"          + $project.Replace("_","").ToLower()
-$dns_name                   = "myCompany_" + $project.Replace("_","").ToLower() + ".com"
+$dns_name                   = "clopez.com"
 
 printMyMessage -message "Starting with the resource groups validations." -c 0
 
@@ -82,14 +82,16 @@ printMyMessage -message "Webside files deployed into the $web container."
 
 printMyMessage -message "Creating a Public DNS to create an alias for the webside." -c 0
     
-    az network dns zone create `
-        --name $dns_name `
-        --tags Project=$project
+    # az network dns zone create `
+    #     --name $dns_name `
+    #     --tags Project=$project
 
+    $FQDN = $primaryEndpoint -replace "https://","" -Replace"/$",""
+    Write-Host "$FQDN" 
     az network dns record-set cname set-record `
         --zone-name $dns_name `
         --record-set-name "www" `
-        --cname stip5120250128.z22.web.core.windows.net
+        --cname $FQDN
     
     $cname = "www." + $dns_name
     Write-Host "Associating the custom domain with the Azure storage account." -BackgroundColor DarkGreen
