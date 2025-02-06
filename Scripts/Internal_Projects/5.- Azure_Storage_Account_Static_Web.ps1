@@ -82,22 +82,23 @@ printMyMessage -message "Webside files deployed into the $web container."
 
 printMyMessage -message "Creating a Public DNS to create an alias for the webside." -c 0
     
-    # az network dns zone create `
-    #     --name $dns_name `
-    #     --tags Project=$project
+    az network dns zone create `
+        --name $dns_name `
+        --tags Project=$project
 
     $FQDN = $primaryEndpoint -replace "https://","" -Replace"/$",""
-    Write-Host "$FQDN" 
+    #Write-Host "$FQDN" 
     az network dns record-set cname set-record `
         --zone-name $dns_name `
         --record-set-name "www" `
         --cname $FQDN
     
-    $cname = "www." + $dns_name
-    Write-Host "Associating the custom domain with the Azure storage account." -BackgroundColor DarkGreen
-    az storage account update `
-        --name $storage_account `
-        --custom-domain $cname 
+    #JLopez-20250206: This section has been commented because I don't buy the domain name in an external provider.
+    # $cname = "www." + $dns_name
+    # Write-Host "Associating the custom domain with the Azure storage account." -BackgroundColor DarkGreen
+    # az storage account update `
+    #     --name $storage_account `
+    #     --custom-domain $cname 
 
 printMyMessage -message "Public DNS deployed."
 Write-Host "The endpoint for the web site app is: $primaryEndpoint" -BackgroundColor DarkYellow
